@@ -12,7 +12,7 @@ PROGR=$1
 INSIZE=$2
 REMOTE=$3
 ITER=1
-PERFARGS=" "
+PERFARGS=" -e cycles -e cache-references -e cache-misses -e branches -e branch-misses"
 PROTOCOL="http://"
 NEWCASE="/Temporary_Listen_Addresses/case"
 START="/Temporary_Listen_Addresses/start"
@@ -30,6 +30,12 @@ declare -a perfcounters
 # results
 declare -a res
 
+perfcounters[0]="cycles"
+perfcounters[1]="cache-references"
+perfcounters[2]="cache-misses"
+perfcounters[3]="branches"
+perfcounters[4]="branch-misses"
+perfcounters[5]="seconds"
 
 function printAvailablePerfCounters {
   echo "Available performance counters are: ${availPerfCounters[@]}"
@@ -41,7 +47,7 @@ function printSelectedPerfCounters {
 
 function setPerformanceCounters {
   # gather the available perf counters
-  perfout=`perf list hw 2>&1`
+  perfout=`perf_2.6.38-8 list hw 2>&1`
   ll=($perfout)
   count=1
   declare -a res
@@ -236,7 +242,7 @@ function parseOutput {
 # run the program...
 function runProgram {
   echo "running perf stat $PERFARGS $PROGR $INSIZE ..."
-  perfout=`perf stat $PERFARGS $PROGR $INSIZE 2>&1`
+  perfout=`perf_2.6.38-8 stat $PERFARGS $PROGR $INSIZE 2>&1`
   # parse the output of perf stat
   parseOutput
   echo "$PROGR $INSIZE terminated"

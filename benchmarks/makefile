@@ -7,7 +7,7 @@ CFLAGS=-c -Wall
 SRC=src
 BIN=bin
 
-all: bubble heap insert merges quick selection randMemAccess simpleFPU simpleINT memtester MemoryTester
+all: heap insert merges quick selection randMemAccess simpleFPU simpleINT memtester MemoryTester bubble
 
 bubble: $(SRC)/bubble.c
 	$(CC) $(SRC)/bubble.c -o $(BIN)/bubble
