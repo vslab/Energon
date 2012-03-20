@@ -34,10 +34,6 @@ e.Run()
 e.Results
 
 
-let exp = new ExperimentCase([| proc; proc2 |], 3, [| (42 :> obj) |], load)
-exp.Run()
-
-
 
 
 
