@@ -1,4 +1,4 @@
-﻿#r @"C:\Users\Davide\Desktop\Projects\energon\energon\EnergonFramework\Measuring\bin\Debug\Energon.Measuring.dll"
+﻿#r @"C:\Users\Davide\Desktop\Projects\Energon\Measuring\bin\Debug\Energon.Measuring.dll"
 open Energon.Measuring
 
 // a couple of sensors...
@@ -15,10 +15,24 @@ let rec fib(n) =
     | x -> fib (x-1) + fib (x-2)
 
 
-let load() = printfn "fib(42)=%d" (fib(42))
+let load(s:seq<obj>) = 
+    let n_o = Seq.head s
+    let n = n_o :?> int
+    printfn "fib(%d)=%d" (n) (fib(n))
+
+
 //define an exepriment
-//let exp = new Experiment([| proc; proc2 |])
-let exp = new ExperimentCase([| proc; proc2 |], 3, [| ("iter", 42 :> obj) |], load)
+let args = seq {
+        for i in 40..42 -> 
+            seq {
+                yield i :> obj
+            } 
+    }
+
+let e = new Experiment( [| proc; proc2 |], 3, [|"n"|], args, load)
+e.Run()
+
+let exp = new ExperimentCase([| proc; proc2 |], 3, [| (42 :> obj) |], load)
 
 exp.Run()
 
@@ -30,7 +44,7 @@ exp.Results
 exp.MeansAndStdDev
 
 // ****************** Analysis ***************************
-#r @"C:\Users\Davide\Desktop\Projects\energon\energon\EnergonFramework\Analysis\bin\Debug\Energon.Analysis.dll"
+#r @"C:\Users\Davide\Desktop\Projects\Energon\Analysis\bin\Debug\Energon.Analysis.dll"
 
 //RealtimeTools
 Tools.MovingAverageReading 3 exp.Results.[proc].[1]
@@ -40,7 +54,7 @@ Tools.meanAndStdDevReading exp.Results.[proc].[1]
 // ****************** Draw ***************************
 
 
-#r @"C:\Users\Davide\Desktop\Projects\energon\energon\EnergonFramework\Charts\bin\Debug\Energon.Charts.dll"
+#r @"C:\Users\Davide\Desktop\Projects\Energon\Charts\bin\Debug\Energon.Charts.dll"
 open Energon.Charts
 
 showExperimentMeansAndStdDev exp
@@ -62,7 +76,7 @@ proc2.Stop()
 
 // ****************** Storage ***************************
 
-#r @"C:\Users\Davide\Desktop\Projects\energon\energon\EnergonFramework\Storage\bin\Debug\Energon.Storage.dll"
+#r @"C:\Users\Davide\Desktop\Projects\Energon\Storage\bin\Debug\Energon.Storage.dll"
 open Energon.Storage
 
 saveExperimentResultsToCompactCSV(@"C:\Users\Davide\Downloads\test.csv",exp,1000.)

@@ -5,12 +5,14 @@
 #load "Module1.fs"
 open Module1
 
-#r @"C:\Users\Davide\Desktop\Projects\energon\energon\EnergonFramework\Charts\MSDN.FSharpChart.dll"
+#r @"..\Charts\MSDN.FSharpChart.dll"
 
 open MSDN.FSharp.Charting
 
 
 let S = seq { let r = System.Random(100) in while true do yield r.NextDouble() }
+let S2 = seq { let r = System.Random(101) in while true do yield r.NextDouble() }
+
 let prob0 = seq { while true do yield 0 }
  
 //S |> Seq.take 10
@@ -33,6 +35,9 @@ let binomial p n0 (s:System.Collections.Generic.IEnumerator<float>) =
  
 let ss = S.GetEnumerator()
 ss.MoveNext() |> ignore
+
+let ss2 = S2.GetEnumerator()
+ss2.MoveNext() |> ignore
  
 seq { while true do yield ss |> binomial 0.5 20 } |> Seq.take 1000000 |> Seq.countBy (fun v -> v) |> Seq.toList |> List.sort |> FSharpChart.Line |> FSharpChart.Create
 
@@ -44,8 +49,9 @@ let gaussianBoxMuller m sigma (s:System.Collections.Generic.IEnumerator<float>) 
   m + sigma * sqrt(-2. * log(u)) * cos(2. * System.Math.PI * v)
  
 FSharpChart.Rows [
-  seq { while true do yield (ss |> gaussianBoxMuller 0. 1.) * 2. } |> Seq.take 1000000 |> Seq.countBy (fun v -> floor(v * 100.) / 100.)|> Seq.toList |> FSharpChart.Column;
+  seq { while true do yield (ss |> gaussianBoxMuller 0. 1.) } |> Seq.take 1000000 |> Seq.countBy (fun v -> floor(v * 100.) / 100.)|> Seq.toList |> FSharpChart.Column;
   seq { while true do yield (ss |> gaussianBoxMuller 0. 1.) + (ss |> gaussianBoxMuller 0. 1.) } |> Seq.take 1000000 |> Seq.countBy (fun v -> floor(v * 100.) / 100.)|> Seq.toList |> FSharpChart.Column
+  //seq { while true do yield (ss |> gaussianBoxMuller 0. 1.) + (ss2 |> gaussianBoxMuller 0. 1.) } |> Seq.take 1000000 |> Seq.countBy (fun v -> floor(v * 100.) / 100.)|> Seq.toList |> FSharpChart.Column
   seq {
    let s1 = S.GetEnumerator()
    let s2 = S.GetEnumerator()

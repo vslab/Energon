@@ -2,7 +2,7 @@
 open System
 open System.Collections.Generic
 
-type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<string*obj>, load: unit -> unit, ?waitInterval) =
+type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: seq<obj> -> unit, ?waitInterval) =
     let wait = defaultArg waitInterval 1000
     let results = new Dictionary<GenericSensor, List<Reading[]>>()
     let resultsMeans = new Dictionary<GenericSensor, List<float*float>>()
@@ -15,7 +15,7 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<string*obj>, 
         let rec runIter i =
             let exp = new ExperimentRun(sensors)
             exp.Start()
-            load()
+            load(args)
             exp.Stop()
             startStop.Enqueue((exp.StartTime, exp.EndTime))
             Seq.iter (fun s -> results.[s].Add(exp.Results.[s])) sensors

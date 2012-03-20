@@ -47,6 +47,7 @@
     <Compile Include="PerformanceCounter.fs" />
     <Compile Include="ExperimentRun.fs" />
     <Compile Include="ExperimentCase.fs" />
+    <Compile Include="Experiment.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
