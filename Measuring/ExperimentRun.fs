@@ -86,12 +86,15 @@ type ExperimentRun(sensors:seq<GenericSensor>) =
             timer.Enabled <- false
             Seq.iter (fun (s:GenericSensor) -> results.Add(s, currentData.[s].ToArray() ) ) sensors
         let meanAndStdDevReading numSeq = 
-            let sqr (x:float) = x * x
-            let mean = 
-                numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.average
-            let variance = 
-                numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.averageBy (fun x -> sqr(x - mean))
-            (mean, sqrt(variance))
+            if Seq.isEmpty numSeq then
+                (0.,0.)
+            else
+                let sqr (x:float) = x * x
+                let mean = 
+                    numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.average
+                let variance = 
+                    numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.averageBy (fun x -> sqr(x - mean))
+                (mean, sqrt(variance))
         // means and std. dev.
         sensors |> Seq.iter (fun s -> means.Add(s, meanAndStdDevReading results.[s])) 
 

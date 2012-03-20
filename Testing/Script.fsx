@@ -26,14 +26,15 @@ let args = seq {
         for i in 40..42 -> 
             seq {
                 yield i :> obj
-            } 
+            }
     }
 
 let e = new Experiment( [| proc; proc2 |], 3, [|"n"|], args, load)
 e.Run()
+e.Results
+
 
 let exp = new ExperimentCase([| proc; proc2 |], 3, [| (42 :> obj) |], load)
-
 exp.Run()
 
 
