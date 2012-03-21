@@ -45,7 +45,7 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
     member x.Results 
         with get() = results
     ///<summary>
-    /// Fpr every sensor and for every run the average value and the std dev of the reading taken during every experiment run
+    /// For every sensor and for every run the average value and the std dev of the reading taken during every experiment run
     ///</summary>
     member x.ResultsMeansAndStdDev 
         with get() = resultsMeans
