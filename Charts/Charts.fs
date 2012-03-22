@@ -11,7 +11,7 @@ open System.Drawing
 
 let showFloatLine (d:float[]) =
     d |> FSharpChart.FastLine |> FSharpChart.Create
-
+    
 let showReadingsLine (d:Reading[]) =
     d |> Array.map (fun r -> (r.Timestamp.ToLongTimeString(), r.Value) ) |> FSharpChart.FastLine |> FSharpChart.Create
 

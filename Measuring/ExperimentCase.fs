@@ -8,13 +8,16 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
     let resultsMeans = new Dictionary<GenericSensor, List<float*float>>()
     let means = new Dictionary<GenericSensor, float*float>()
     let startStop = new Queue<DateTime*DateTime>()
-    member x.Run() =
+    let mutable push = false
+
+    member x.Run(?isPush) =
+        push <- defaultArg isPush false
         results.Clear()
         Seq.iter (fun s -> results.Add(s, new List<Reading[]>())) sensors
         Seq.iter (fun s -> resultsMeans.Add(s, new List<float*float>())) sensors
         let rec runIter i =
             let exp = new ExperimentRun(sensors)
-            exp.Start()
+            exp.Start(push)
             load(args)
             exp.Stop()
             startStop.Enqueue((exp.StartTime, exp.EndTime))

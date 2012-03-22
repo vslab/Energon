@@ -6,7 +6,9 @@ type Experiment(sensors:seq<GenericSensor>, iter:int, argNames:seq<string>, args
     let wait = defaultArg waitInterval 1000
     let results = new Dictionary<GenericSensor, List<List<Reading[]>>>()
     let means = new Dictionary<GenericSensor, List<(float*float)>>()
-    member x.Run() =
+    let mutable push = false
+    member x.Run(?isPush) =
+        push <- defaultArg isPush false
         results.Clear()
         means.Clear()
         sensors |> Seq.iter (fun s -> results.Add(s, new List<List<Reading[]>>()); means.Add(s, new List<(float*float)>()) )

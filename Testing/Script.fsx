@@ -6,6 +6,7 @@ let proc = new PerfCounter("Process", "% Processor Time", 1.)
 proc.Instance <- "FSI"
 let proc2 = new PerfCounter("Process", "% User Time", 1.)
 proc2.Instance <- "FSI"
+let proc3 = new PerfCounter("IPv4", "Datagrams/sec", 1.)
 
 // something that uses CPU/mem
 let rec fib(n) = 
@@ -29,11 +30,11 @@ let args = seq {
             }
     }
 
-let e = new Experiment( [| proc; proc2 |], 3, [|"n"|], args, load)
-e.Run()
+let e = new Experiment( [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
+
+e.Run(true)
+
 e.Results
-
-
 
 
 
@@ -42,6 +43,8 @@ exp.MeansAndStdDev
 
 // ****************** Analysis ***************************
 #r @"C:\Users\Davide\Desktop\Projects\Energon\Analysis\bin\Debug\Energon.Analysis.dll"
+
+Tools.expCorrMatrix e
 
 //RealtimeTools
 Tools.MovingAverageReading 3 exp.Results.[proc].[1]
