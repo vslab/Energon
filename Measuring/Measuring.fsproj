@@ -44,7 +44,6 @@
     <Compile Include="GenericSensor.fs" />
     <Compile Include="PullSensor.fs" />
     <Compile Include="PushSensor.fs" />
-    <Compile Include="CompletionTime.fs" />
     <Compile Include="PerformanceCounter.fs" />
     <Compile Include="ExperimentRun.fs" />
     <Compile Include="ExperimentCase.fs" />
