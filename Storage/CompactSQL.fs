@@ -1,4 +1,4 @@
-﻿module CompactSQL
+﻿module Energon.CompactSQL
 
 (*
 #I @"C:\Program Files (x86)\Microsoft SQL Server Compact Edition\v4.0\Desktop"
@@ -61,7 +61,7 @@ let SaveExperiment (exp:Energon.Measuring.Experiment) file =
             db.SensorClasses.InsertOnSubmit(newsensorclass)
             db.SubmitChanges()
             newsensorclass
-    let sensors = List.map (fun s1 -> handleSensor s1 ) (exp.Sensors.ToList())
+    let sensors = Seq.map (fun s1 -> handleSensor s1 ) (exp.Sensors.ToArray())
     let argsToString (args:seq<obj>) = 
         let sb = new StringBuilder()
         Seq.iter2 (fun x y -> sb.AppendFormat("{0}={1},", x, y.ToString()) |> ignore ) exp.ArgNames args
@@ -70,8 +70,8 @@ let SaveExperiment (exp:Energon.Measuring.Experiment) file =
     let saveCase (c:Energon.Measuring.ExperimentCase) =
         let sensorClassFromSensor (s:Energon.Measuring.GenericSensor) =
             sensors.First(fun x -> x.SensorName.ToLower() = s.Name.ToLower())
-        let count = c.IterCount
-        for i in 0..count do
+        let maxi = c.IterCount - 1
+        for i in 0..maxi do
             let first (a,b) = a
             let second (a,b) = b
             // new experiment run
@@ -102,3 +102,4 @@ let SaveExperiment (exp:Energon.Measuring.Experiment) file =
                 db.SubmitChanges()
             c.Sensors |> Seq.iter handleSensor
     exp.Cases |> Seq.iter saveCase
+

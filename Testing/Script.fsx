@@ -30,11 +30,52 @@ let args = seq {
             }
     }
 
-let e = new Experiment( [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
+let e = new Experiment("fibonacci 40..42", [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
 
 e.Run(true)
 
 e.Results
+
+
+// ****************** SqlCE ***************************
+#r @"C:\Users\Davide\Desktop\Projects\Energon\Storage\bin\Debug\Energon.Measuring.dll"
+#r @"C:\Users\Davide\Desktop\Projects\Energon\SqlCompactDb\Measurement\bin\Debug\Energon.Measurement.dll"
+
+(*
+#I @"C:\Program Files (x86)\Microsoft SQL Server Compact Edition\v4.0\Desktop"
+#r "System.Data.SqlServerCe.dll"
+
+#I @"..\Measuring\bin\Debug"
+#r "Energon.Measuring.dll"
+
+#I @"..\SqlCompactDb\Measurement\bin\Debug"
+#r "Energon.Measurement.dll"
+
+#r "System.Data.Linq.dll"
+#r "System.Linq.dll"
+
+#r "FSharp.PowerPack.Linq.dll"
+#r "FSharp.Data.TypeProviders.dll"
+*)
+
+open System
+open FSharp.Data.TypeProviders
+open System.Data.Linq.SqlClient
+open System.Linq
+open Microsoft.FSharp.Linq
+open System.Data.Linq
+open Energon.Measurement
+open System.Data.SqlServerCe;
+open Energon.Measuring
+open System.Text
+
+let dbfile = "C:\\Users\\Davide\\Desktop\\Projects\\Energon\\test.sdf"
+
+//CompactSQL
+SaveExperiment e dbfile
+
+let db = GetLinqContext dbfile
+db
 
 
 
@@ -77,9 +118,10 @@ proc2.Stop()
 // ****************** Storage ***************************
 
 #r @"C:\Users\Davide\Desktop\Projects\Energon\Storage\bin\Debug\Energon.Storage.dll"
-open Energon.Storage
+open Energon.Measurement
 
-saveExperimentResultsToCompactCSV(@"C:\Users\Davide\Downloads\test.csv",exp,1000.)
+
+//Energon.Storage.saveExperimentResultsToCompactCSV(@"C:\Users\Davide\Downloads\test.csv",exp,1000.)
 
 
 
@@ -173,7 +215,6 @@ proc.Start()
 proc.Stop()
 proc.Results.Length
 
-(*
 let c = [| 1 ; 2 ;1 |] |> FSharpChart.FastLine |> FSharpChart.Create
 
 
@@ -320,3 +361,5 @@ let l1 =
 l1
 
 *)
+
+let a = 1
