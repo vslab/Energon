@@ -2,18 +2,22 @@
 open System
 open System.Collections.Generic
 
-type Experiment(sensors:seq<GenericSensor>, iter:int, argNames:seq<string>, args:seq<seq<obj>>, load: seq<obj> -> unit, ?waitInterval) =
+type Experiment(name:string, sensors:seq<GenericSensor>, iter:int, argNames:seq<string>, args:seq<seq<obj>>, load: seq<obj> -> unit, ?waitInterval) =
     let wait = defaultArg waitInterval 1000
     let results = new Dictionary<GenericSensor, List<List<Reading[]>>>()
     let means = new Dictionary<GenericSensor, List<(float*float)>>()
     let mutable push = false
+    let mutable note = ""
+    let cases = new List<ExperimentCase>()
     member x.Run(?isPush) =
         push <- defaultArg isPush false
         results.Clear()
         means.Clear()
+        cases.Clear()
         sensors |> Seq.iter (fun s -> results.Add(s, new List<List<Reading[]>>()); means.Add(s, new List<(float*float)>()) )
         let runCase (a:seq<obj>) =
             let case = new ExperimentCase(sensors, iter, a, load, wait)
+            cases.Add(case)
             case.Run()
             sensors |> Seq.iter (fun s -> results.[s].Add(case.Results.[s]);means.[s].Add(case.MeansAndStdDev.[s]) )
         args |> Seq.iter runCase 
@@ -32,5 +36,16 @@ type Experiment(sensors:seq<GenericSensor>, iter:int, argNames:seq<string>, args
         with get() = sensors
     member x.IterCount
         with get() = iter
+    member x.Name
+        with get() = name
+    member x.Note
+        with get() = note
+        and set(v) = note <- v
+    member x.ArgNames
+        with get() = argNames
+    member x.Args
+        with get() = args
+    member x.Cases
+        with get() = cases
 
 

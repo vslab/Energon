@@ -39,16 +39,16 @@
     <Compile Include="File1.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Measuring\Measuring.fsproj">
-      <Name>Measuring</Name>
-      <Project>{a4fd1437-9d0e-45ac-a073-d2a444d23a1a}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
+    <ProjectReference Include="..\Measuring\Measuring.fsproj">
+      <Name>Measuring</Name>
+      <Project>{a4fd1437-9d0e-45ac-a073-d2a444d23a1a}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Phidgets\Phidgets.fsproj">
       <Name>Phidgets</Name>
       <Project>{04873604-574d-4bfb-b12a-e231d536b60e}</Project>

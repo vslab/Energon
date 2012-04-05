@@ -63,4 +63,6 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
         with get() = iter
     member x.StartStopTimes
         with get() = startStop.ToArray()
+    member x.Args
+        with get() = args
 
