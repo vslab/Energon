@@ -13,9 +13,17 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
     let mutable id = 0
 
     let newReadingEvent = new Event<ExperimentCase * ExperimentRun * GenericSensor * Reading>()
+    let experimentRunStarting = new Event<ExperimentCase * ExperimentRun>()
+    let experimentRunStopping = new Event<ExperimentCase * ExperimentRun>()
 
     [<CLIEvent>]
     member this.NewReadingEvent = newReadingEvent.Publish
+
+    [<CLIEvent>]
+    member this.ExperimentRunStartingEvent = experimentRunStarting.Publish
+
+    [<CLIEvent>]
+    member this.ExperimentRunStoppingEvent = experimentRunStopping.Publish
 
     member x.ID
         with get() = id
@@ -31,6 +39,14 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
             exp.NewReadingEvent.Add(fun (run, s, read) ->
                 let args = (self, run,s,read)
                 newReadingEvent.Trigger(args)
+                )
+            exp.ExperimentRunStartingEvent.Add(fun (run) ->
+                let args = (self, run)
+                experimentRunStarting.Trigger(args)
+                )
+            exp.ExperimentRunStoppingEvent.Add(fun (run) ->
+                let args = (self, run)
+                experimentRunStopping.Trigger(args)
                 )
             exp.Start(push)
             load(args)

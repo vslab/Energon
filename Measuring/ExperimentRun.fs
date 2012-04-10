@@ -14,6 +14,8 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
     let means = new Dictionary<GenericSensor, float*float>()
     let timer = new System.Timers.Timer(dt)
     let newReadingEvent = new Event<ExperimentRun * GenericSensor * Reading>()
+    let experimentRunStarting = new Event<ExperimentRun>()
+    let experimentRunStopping = new Event<ExperimentRun>()
 
     let pullValues() =
         printfn "pull Values %d %d" (DateTime.Now.Second) (DateTime.Now.Millisecond)
@@ -33,6 +35,12 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
 
     [<CLIEvent>]
     member this.NewReadingEvent = newReadingEvent.Publish
+
+    [<CLIEvent>]
+    member this.ExperimentRunStartingEvent = experimentRunStarting.Publish
+
+    [<CLIEvent>]
+    member this.ExperimentRunStoppingEvent = experimentRunStopping.Publish
 
     member x.ID
         with get() = id
