@@ -30,7 +30,12 @@ let args = seq {
             }
     }
 
+
+
+
 let e = new Experiment("fibonacci 40..42", [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
+
+
 
 e.Run(true)
 
@@ -50,7 +55,7 @@ e.Results
 #r "Energon.Measuring.dll"
 
 #I @"..\SqlCompactDb\Measurement\bin\Debug"
-#r "Energon.Measurement.dll"
+#r "Energon.SQLCE.dll"
 
 #r "System.Data.Linq.dll"
 #r "System.Linq.dll"
@@ -75,7 +80,15 @@ let dbfile = "C:\\Users\\Davide\\Desktop\\Projects\\Energon\\test.sdf"
 //CompactSQL
 //Energon.CompactSQL.SaveExperiment e dbfile
 
-open Energon.Measurement
+open Energon.SQLCE
+
+let exp = new Experiment("fibonacci 40..42", [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
+let saver = new Energon.CompactSQL.ExperimentRuntimeSaver(exp, dbfile)
+exp.Run(true)
+
+#quit;;
+
+
 let db = new Energon.Measurement.Measurements(dbfile)
 let exp = db.Experiments.Where(fun (x:Experiments) -> x.Name.StartsWith("fibonacci")).First()
 printf "%s\n" exp.Name

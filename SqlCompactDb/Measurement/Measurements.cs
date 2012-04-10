@@ -9,7 +9,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Energon.Measurement
+namespace Energon.SQLCE
 {
 	using System.Data.Linq;
 	using System.Data.Linq.Mapping;

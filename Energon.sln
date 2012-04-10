@@ -17,7 +17,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Analysis", "Analysis\Analys
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ErrorPropagation", "ErrorPropagation\ErrorPropagation.fsproj", "{D07A8870-2630-49D2-B9E1-615CFA2C761B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Measurement.Linq", "SqlCompactDb\Measurement\Measurement.Linq.csproj", "{7675A39A-3B2C-45D6-A4E6-2F5F07B0877E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLCE", "SqlCompactDb\Measurement\SQLCE.csproj", "{7675A39A-3B2C-45D6-A4E6-2F5F07B0877E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

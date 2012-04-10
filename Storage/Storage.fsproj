@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\Storage.XML</DocumentationFile>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -79,8 +80,8 @@
       <Project>{a4fd1437-9d0e-45ac-a073-d2a444d23a1a}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\SqlCompactDb\Measurement\Measurement.Linq.csproj">
-      <Name>Measurement.Linq</Name>
+    <ProjectReference Include="..\SqlCompactDb\Measurement\SQLCE.csproj">
+      <Name>SQLCE</Name>
       <Project>{7675a39a-3b2c-45d6-a4e6-2f5f07b0877e}</Project>
       <Private>True</Private>
     </ProjectReference>
