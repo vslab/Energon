@@ -7,7 +7,12 @@ type GenericSensor(name:string, valueType) =
   let valueType:DataType = valueType
   let mutable error = 0.
   let mutable running = false
-  
+  let mutable id = 0
+
+  member x.ID 
+    with get() = id
+    and set(v) = id <- v
+
   ///<summary> Starts acquiring data.
   ///</summary>
   abstract member Start: unit -> unit

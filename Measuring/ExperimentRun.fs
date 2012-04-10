@@ -3,7 +3,7 @@
 open System
 open System.Collections.Generic
 
-type ExperimentRun(sensors:seq<GenericSensor>) =
+type ExperimentRun(sensors:seq<GenericSensor>) as self =
     let mutable startTime = DateTime.MinValue
     let mutable endTime = DateTime.MinValue
     let mutable running = false
@@ -13,17 +13,31 @@ type ExperimentRun(sensors:seq<GenericSensor>) =
     let currentData = new Dictionary<GenericSensor, Queue<Reading>>()
     let means = new Dictionary<GenericSensor, float*float>()
     let timer = new System.Timers.Timer(dt)
+    let newReadingEvent = new Event<ExperimentRun * GenericSensor * Reading>()
+
     let pullValues() =
         printfn "pull Values %d %d" (DateTime.Now.Second) (DateTime.Now.Millisecond)
-        Seq.iter (fun (s:GenericSensor) -> let q = currentData.[s] in q.Enqueue((s:?> PullSensor).CurrValue() )) sensors
+        let pullSensorVal (s:GenericSensor) = 
+            let q = currentData.[s] 
+            let v = (s:?> PullSensor).CurrValue()
+            let eventArg = (self, s, v)
+            q.Enqueue(v)
+            newReadingEvent.Trigger eventArg
+        Seq.iter pullSensorVal sensors
     do
         timer.AutoReset <- true
         timer.Enabled <- false
         timer.Elapsed.Add(fun _ -> pullValues())
 
-    ///<summary> The time interval between requests of Reading to sensors 
-    /// in msecs
-    /// only used if is no push
+    let mutable id = 0
+
+    [<CLIEvent>]
+    member this.NewReadingEvent = newReadingEvent.Publish
+
+    member x.ID
+        with get() = id
+        and set(v) = id <- v
+
     /// ignored after Start(true) has been invoked
     /// default value is 1000
     ///</summary>

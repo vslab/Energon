@@ -78,7 +78,12 @@ let dbfile = "C:\\Users\\Davide\\Desktop\\Projects\\Energon\\test.sdf"
 open Energon.Measurement
 let db = new Energon.Measurement.Measurements(dbfile)
 let exp = db.Experiments.Where(fun (x:Experiments) -> x.Name.StartsWith("fibonacci")).First()
-let case = db.exp
+printf "%s\n" exp.Name
+let cases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = exp.Id)
+let printCase (c:ExperimentCases) =
+    printf "%s=%s" exp.ArgNames c.Args
+    let runs = db.ExperimentRuns.Where(fun (r:ExperimentRuns) -> r.Experiment_case_id = c.Id)
+
 let db2 = Energon.CompactSQL.GetLinqContext dbfile
 db
 

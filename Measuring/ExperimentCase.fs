@@ -2,13 +2,24 @@
 open System
 open System.Collections.Generic
 
-type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: seq<obj> -> unit, ?waitInterval) =
+type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: seq<obj> -> unit, ?waitInterval) as self =
     let wait = defaultArg waitInterval 1000
     let results = new Dictionary<GenericSensor, List<Reading[]>>()
     let resultsMeans = new Dictionary<GenericSensor, List<float*float>>()
     let means = new Dictionary<GenericSensor, float*float>()
     let startStop = new Queue<DateTime*DateTime>()
     let mutable push = false
+    
+    let mutable id = 0
+
+    let newReadingEvent = new Event<ExperimentCase * ExperimentRun * GenericSensor * Reading>()
+
+    [<CLIEvent>]
+    member this.NewReadingEvent = newReadingEvent.Publish
+
+    member x.ID
+        with get() = id
+        and set(v) = id <- v
 
     member x.Run(?isPush) =
         push <- defaultArg isPush false
@@ -17,6 +28,10 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
         Seq.iter (fun s -> resultsMeans.Add(s, new List<float*float>())) sensors
         let rec runIter i =
             let exp = new ExperimentRun(sensors)
+            exp.NewReadingEvent.Add(fun (run, s, read) ->
+                let args = (self, run,s,read)
+                newReadingEvent.Trigger(args)
+                )
             exp.Start(push)
             load(args)
             exp.Stop()

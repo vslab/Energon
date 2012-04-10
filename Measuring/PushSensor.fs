@@ -109,4 +109,4 @@ type PushSensor(name:string, valueType, hz) =
         with get() = newValue.Publish
 
     override this.CurrValue() = 
-            new Reading(DateTime.Now, valueType, lastv.Value, lastv.Raw)
+        new Reading(DateTime.Now, valueType, lastv.Value, lastv.Raw)
