@@ -67,16 +67,21 @@ let SaveExperiment (exp:Energon.Measuring.Experiment) file =
         Seq.iter2 (fun x y -> sb.AppendFormat("{0}={1},", x, y.ToString()) |> ignore ) exp.ArgNames args
         sb.ToString()
     // for every experiment case
-    let saveCase (c:Energon.Measuring.ExperimentCase) =
+    let saveCase (c:Energon.Measuring.ExperimentCase) =        
         let sensorClassFromSensor (s:Energon.Measuring.GenericSensor) =
             sensors.First(fun x -> x.SensorName.ToLower() = s.Name.ToLower())
+        let expCase = new Energon.Measurement.ExperimentCases()
+        expCase.Experiment_id <- experiment.Id
+        expCase.Args <- argsToString c.Args
+        db.ExperimentCases.InsertOnSubmit(expCase)
+        db.SubmitChanges()
         let maxi = c.IterCount - 1
         for i in 0..maxi do
             let first (a,b) = a
             let second (a,b) = b
             // new experiment run
             let run = new Energon.Measurement.ExperimentRuns()
-            run.Experiment_id <- experiment.Id
+            run.Experiment_case_id <- expCase.Id
             run.Args <- argsToString c.Args
             run.Start <- new Nullable<DateTime>( first (c.StartStopTimes.[i]))
             run.End <- new Nullable<DateTime>(second (c.StartStopTimes.[i]))

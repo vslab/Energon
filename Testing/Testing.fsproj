@@ -39,10 +39,21 @@
     <Compile Include="File1.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SqlCompactDb\Measurement\Measurement.Linq.csproj">
+      <Name>Measurement.Linq</Name>
+      <Project>{7675a39a-3b2c-45d6-a4e6-2f5f07b0877e}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Storage\Storage.fsproj">
+      <Name>Storage</Name>
+      <Project>{ba39be75-a968-4765-a8a9-cd00721b30eb}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.Linq" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
     <ProjectReference Include="..\Measuring\Measuring.fsproj">
       <Name>Measuring</Name>

@@ -32,6 +32,9 @@ namespace Energon.Measurement
     partial void InsertEnvironment(Environment instance);
     partial void UpdateEnvironment(Environment instance);
     partial void DeleteEnvironment(Environment instance);
+    partial void InsertExperimentCases(ExperimentCases instance);
+    partial void UpdateExperimentCases(ExperimentCases instance);
+    partial void DeleteExperimentCases(ExperimentCases instance);
     partial void InsertExperimentRuns(ExperimentRuns instance);
     partial void UpdateExperimentRuns(ExperimentRuns instance);
     partial void DeleteExperimentRuns(ExperimentRuns instance);
@@ -78,6 +81,14 @@ namespace Energon.Measurement
 			get
 			{
 				return this.GetTable<Environment>();
+			}
+		}
+		
+		public System.Data.Linq.Table<ExperimentCases> ExperimentCases
+		{
+			get
+			{
+				return this.GetTable<ExperimentCases>();
 			}
 		}
 		
@@ -233,6 +244,116 @@ namespace Energon.Measurement
 	}
 	
 	[global::System.Data.Linq.Mapping.TableAttribute()]
+	public partial class ExperimentCases : INotifyPropertyChanging, INotifyPropertyChanged
+	{
+		
+		private static PropertyChangingEventArgs emptyChangingEventArgs = new PropertyChangingEventArgs(String.Empty);
+		
+		private int _Id;
+		
+		private string _Args;
+		
+		private int _Experiment_id;
+		
+    #region Extensibility Method Definitions
+    partial void OnLoaded();
+    partial void OnValidate(System.Data.Linq.ChangeAction action);
+    partial void OnCreated();
+    partial void OnIdChanging(int value);
+    partial void OnIdChanged();
+    partial void OnArgsChanging(string value);
+    partial void OnArgsChanged();
+    partial void OnExperiment_idChanging(int value);
+    partial void OnExperiment_idChanged();
+    #endregion
+		
+		public ExperimentCases()
+		{
+			OnCreated();
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Name="id", Storage="_Id", AutoSync=AutoSync.OnInsert, DbType="Int NOT NULL IDENTITY", IsPrimaryKey=true, IsDbGenerated=true)]
+		public int Id
+		{
+			get
+			{
+				return this._Id;
+			}
+			set
+			{
+				if ((this._Id != value))
+				{
+					this.OnIdChanging(value);
+					this.SendPropertyChanging();
+					this._Id = value;
+					this.SendPropertyChanged("Id");
+					this.OnIdChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Name="args", Storage="_Args", DbType="NVarChar(100)")]
+		public string Args
+		{
+			get
+			{
+				return this._Args;
+			}
+			set
+			{
+				if ((this._Args != value))
+				{
+					this.OnArgsChanging(value);
+					this.SendPropertyChanging();
+					this._Args = value;
+					this.SendPropertyChanged("Args");
+					this.OnArgsChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Name="experiment_id", Storage="_Experiment_id", DbType="Int NOT NULL")]
+		public int Experiment_id
+		{
+			get
+			{
+				return this._Experiment_id;
+			}
+			set
+			{
+				if ((this._Experiment_id != value))
+				{
+					this.OnExperiment_idChanging(value);
+					this.SendPropertyChanging();
+					this._Experiment_id = value;
+					this.SendPropertyChanged("Experiment_id");
+					this.OnExperiment_idChanged();
+				}
+			}
+		}
+		
+		public event PropertyChangingEventHandler PropertyChanging;
+		
+		public event PropertyChangedEventHandler PropertyChanged;
+		
+		protected virtual void SendPropertyChanging()
+		{
+			if ((this.PropertyChanging != null))
+			{
+				this.PropertyChanging(this, emptyChangingEventArgs);
+			}
+		}
+		
+		protected virtual void SendPropertyChanged(String propertyName)
+		{
+			if ((this.PropertyChanged != null))
+			{
+				this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+			}
+		}
+	}
+	
+	[global::System.Data.Linq.Mapping.TableAttribute()]
 	public partial class ExperimentRuns : INotifyPropertyChanging, INotifyPropertyChanged
 	{
 		
@@ -246,7 +367,7 @@ namespace Energon.Measurement
 		
 		private int _Id;
 		
-		private int _Experiment_id;
+		private int _Experiment_case_id;
 		
     #region Extensibility Method Definitions
     partial void OnLoaded();
@@ -260,8 +381,8 @@ namespace Energon.Measurement
     partial void OnEndChanged();
     partial void OnIdChanging(int value);
     partial void OnIdChanged();
-    partial void OnExperiment_idChanging(int value);
-    partial void OnExperiment_idChanged();
+    partial void OnExperiment_case_idChanging(int value);
+    partial void OnExperiment_case_idChanged();
     #endregion
 		
 		public ExperimentRuns()
@@ -349,22 +470,22 @@ namespace Energon.Measurement
 			}
 		}
 		
-		[global::System.Data.Linq.Mapping.ColumnAttribute(Name="experiment_id", Storage="_Experiment_id", DbType="Int NOT NULL")]
-		public int Experiment_id
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Name="experiment_case_id", Storage="_Experiment_case_id", DbType="Int NOT NULL")]
+		public int Experiment_case_id
 		{
 			get
 			{
-				return this._Experiment_id;
+				return this._Experiment_case_id;
 			}
 			set
 			{
-				if ((this._Experiment_id != value))
+				if ((this._Experiment_case_id != value))
 				{
-					this.OnExperiment_idChanging(value);
+					this.OnExperiment_case_idChanging(value);
 					this.SendPropertyChanging();
-					this._Experiment_id = value;
-					this.SendPropertyChanged("Experiment_id");
-					this.OnExperiment_idChanged();
+					this._Experiment_case_id = value;
+					this.SendPropertyChanged("Experiment_case_id");
+					this.OnExperiment_case_idChanged();
 				}
 			}
 		}
@@ -404,6 +525,8 @@ namespace Energon.Measurement
 		
 		private System.Nullable<int> _Iter;
 		
+		private string _ArgNames;
+		
     #region Extensibility Method Definitions
     partial void OnLoaded();
     partial void OnValidate(System.Data.Linq.ChangeAction action);
@@ -416,6 +539,8 @@ namespace Energon.Measurement
     partial void OnIdChanged();
     partial void OnIterChanging(System.Nullable<int> value);
     partial void OnIterChanged();
+    partial void OnArgNamesChanging(string value);
+    partial void OnArgNamesChanged();
     #endregion
 		
 		public Experiments()
@@ -499,6 +624,26 @@ namespace Energon.Measurement
 					this._Iter = value;
 					this.SendPropertyChanged("Iter");
 					this.OnIterChanged();
+				}
+			}
+		}
+		
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Name="argNames", Storage="_ArgNames", DbType="NVarChar(100)")]
+		public string ArgNames
+		{
+			get
+			{
+				return this._ArgNames;
+			}
+			set
+			{
+				if ((this._ArgNames != value))
+				{
+					this.OnArgNamesChanging(value);
+					this.SendPropertyChanging();
+					this._ArgNames = value;
+					this.SendPropertyChanged("ArgNames");
+					this.OnArgNamesChanged();
 				}
 			}
 		}
