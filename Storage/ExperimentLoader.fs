@@ -55,6 +55,7 @@ let ExperimentLoader(expID:int, file:string) =
         runseq |> Seq.map (fun (x:ExperimentRuns) ->
                 sensorsOfRun x
             )
+
     let handleSensors (s:Sensors) =
         let sensRes = sensors.Where(fun (x:DatabaseSensor) -> x.ID = s.Sensor_class_id)
         if (sensRes.Count() = 0) then
@@ -69,6 +70,22 @@ let ExperimentLoader(expID:int, file:string) =
                 Seq.iter handleSensors sensseq
             )
         )  
+    let exp = new DatabaseExperiment(dbExperiment.Name, sensors, dbExperiment.Iter.Value, Seq.empty, Seq.empty)
+    let sensorSeq = seq {
+            for s in sensors do yield s:>GenericSensor
+        }
+    dbCases |> Seq.iter (fun (x:ExperimentCases) ->
+            let split = [";"].ToArray()
+            let args = x.Args.Split(split, StringSplitOptions.RemoveEmptyEntries)
+            let c = new DatabaseExperimentCase(sensorSeq, exp.IterCount, args)
+            exp.ExperimentCases.Add(c)
+            let dbRuns = runsOfCase x
+            dbRuns |> Seq.iter ( fun (r:ExperimentRuns) ->
+                let run = new DatabaseExperimentRun(sensorSeq)
+                c.ExperimentRuns.Add(run)
+
+            )
+        )
 
     1
     
