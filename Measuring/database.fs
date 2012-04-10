@@ -3,6 +3,7 @@
 open System
 open System.Collections.Generic
 
+
 /// a sensors, not usable, just a dummy representation from rthe database
 type DatabaseSensor(name:string) = 
     inherit GenericSensor(name, DataType.Unknown)
@@ -21,6 +22,7 @@ type DatabaseSensor(name:string) =
 
     override x.Reset() = 
         raise (System.InvalidOperationException())
+
 
 /// a database run read from database
 type DatabaseExperimentRun(sensors:seq<GenericSensor>) =
@@ -45,6 +47,7 @@ type DatabaseExperimentRun(sensors:seq<GenericSensor>) =
     member x.EndTime
         with get() = endTime
         and set(v) = endTime <- v
+
 
 
 type DatabaseExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>) =

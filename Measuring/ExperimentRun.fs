@@ -89,6 +89,7 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
         Seq.iter (fun (s:GenericSensor) -> s.Reset()) sensors
         Seq.iter (fun (s:GenericSensor) -> s.Start()) sensors
         running <- true
+        experimentRunStarting.Trigger(self)
         if not push then
             timer.Interval <- dt
             timer.Enabled <- true
@@ -102,6 +103,7 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
         running <- false
         Seq.iter (fun (s:GenericSensor) -> s.Stop()) sensors
         results.Clear()
+        experimentRunStopping.Trigger(self)
         if push then
             Seq.iter (fun (s:GenericSensor) -> results.Add(s, (s :?> PushSensor).Results ) ) sensors
         else

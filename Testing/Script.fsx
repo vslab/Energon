@@ -82,11 +82,18 @@ open Energon.CompactSQL
 
 let exp = new Experiment("fibonacci 40..42", [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
 let saver = new Energon.Storage.ExperimentRuntimeSaver(exp, dbfile)
+
 exp.Run(true)
+
 #quit;;
 
 
-let db = new Energon.Measurement.Measurements(dbfile)
+
+//let db = new Energon.Measurement.Measurements(dbfile)
+let db = saver.LinqContext
+db.Experiments
+db.Measurements1
+
 let exp = db.Experiments.Where(fun (x:Experiments) -> x.Name.StartsWith("fibonacci")).First()
 printf "%s\n" exp.Name
 let cases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = exp.Id)
