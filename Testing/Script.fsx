@@ -1,4 +1,5 @@
-﻿#r @"C:\Users\Davide\Desktop\Projects\Energon\Measuring\bin\Debug\Energon.Measuring.dll"
+﻿#I @"C:\Users\Davide\Desktop\Projects\Energon\bin\Debug"
+#r @"Energon.Measuring.dll"
 open Energon.Measuring
 
 // a couple of sensors...
@@ -43,18 +44,13 @@ e.Results
 
 
 // ****************** SqlCE ***************************
-#r @"C:\Users\Davide\Desktop\Projects\Energon\Storage\bin\Debug\Energon.Storage.dll"
+#r @"Energon.Storage.dll"
 //#r @"C:\Users\Davide\Desktop\Projects\Energon\Storage\bin\Debug\Energon.Measurement.dll"
-#r @"C:\Users\Davide\Desktop\Projects\Energon\SqlCompactDb\Measurement\bin\Debug\Energon.Measurement.dll"
+//#r @"C:\Users\Davide\Desktop\Projects\Energon\SqlCompactDb\Measurement\bin\Debug\Energon.Measurement.dll"
 
 
-#I @"C:\Program Files (x86)\Microsoft SQL Server Compact Edition\v4.0\Desktop"
-#r "System.Data.SqlServerCe.dll"
+#r @"C:\Program Files (x86)\Microsoft SQL Server Compact Edition\v4.0\Desktop\System.Data.SqlServerCe.dll"
 
-#I @"..\Measuring\bin\Debug"
-#r "Energon.Measuring.dll"
-
-#I @"..\SqlCompactDb\Measurement\bin\Debug"
 #r "Energon.SQLCE.dll"
 
 #r "System.Data.Linq.dll"
@@ -63,6 +59,8 @@ e.Results
 #r "FSharp.PowerPack.Linq.dll"
 #r "FSharp.Data.TypeProviders.dll"
 
+#r "System.Data.DataSetExtensions.dll"
+#r "System.Core.dll"
 
 open System
 open Microsoft.FSharp.Data.TypeProviders
@@ -70,22 +68,21 @@ open System.Data.Linq.SqlClient
 open System.Linq
 open Microsoft.FSharp.Linq
 open System.Data.Linq
-open Energon.Measurement
 open System.Data.SqlServerCe;
 open Energon.Measuring
 open System.Text
-
+open System.Data.DataSetExtensions
 let dbfile = "C:\\Users\\Davide\\Desktop\\Projects\\Energon\\test.sdf"
 
 //CompactSQL
 //Energon.CompactSQL.SaveExperiment e dbfile
 
 open Energon.SQLCE
+open Energon.CompactSQL
 
 let exp = new Experiment("fibonacci 40..42", [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
-let saver = new Energon.CompactSQL.ExperimentRuntimeSaver(exp, dbfile)
+let saver = new Energon.Storage.ExperimentRuntimeSaver(exp, dbfile)
 exp.Run(true)
-
 #quit;;
 
 

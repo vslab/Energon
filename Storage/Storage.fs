@@ -1,6 +1,6 @@
 ﻿// Learn more about F# at http://fsharp.net
 
-module Energon.Storage
+module Energon.CSV
 
 open System
 open System.IO
