@@ -33,15 +33,11 @@ let args = seq {
 
 
 
-
+(*
 let e = new Experiment("fibonacci 40..42", [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
-
-
-
 e.Run(true)
-
 e.Results
-
+*)
 
 // ****************** SqlCE ***************************
 #r @"Energon.Storage.dll"
@@ -77,8 +73,21 @@ let dbfile = "C:\\Users\\Davide\\Desktop\\Projects\\Energon\\test.sdf"
 //CompactSQL
 //Energon.CompactSQL.SaveExperiment e dbfile
 
+// example getting data from db
 open Energon.SQLCE
 open Energon.CompactSQL
+let db = Energon.CompactSQL.GetLinqContext dbfile
+let exp = db.Experiments
+let expCases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = exp.First().Id )
+expCases
+let lastExpCase = expCases.Where(fun (x:ExperimentCases) -> x.Id = 3 ).First()
+let runs = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Experiment_case_id = lastExpCase.Id )
+runs
+let lastRun = runs.Where(fun (x:ExperimentRuns) -> x.Id = 9).First()
+let sensors = db.Sensors.Where(fun (x:Sensors) -> x.Experiment_run_id = lastRun.Id)
+let lastSensor = sensors.Where(fun (x:Sensors) -> x.Sensor_class_id = 3).First()
+let measurements = db.Measurements1.Where(fun (x:Measurements1) -> x.Sensor_id = lastSensor.Id )
+measurements
 
 let exp = new Experiment("fibonacci 40..42", [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
 let saver = new Energon.Storage.ExperimentRuntimeSaver(exp, dbfile)
@@ -93,6 +102,7 @@ exp.Run(true)
 let db = saver.LinqContext
 db.Experiments
 db.Measurements1
+
 
 let exp = db.Experiments.Where(fun (x:Experiments) -> x.Name.StartsWith("fibonacci")).First()
 printf "%s\n" exp.Name

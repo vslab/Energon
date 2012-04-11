@@ -74,6 +74,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="ExperimentRuntimeSaver.fs" />
+    <Compile Include="ExperimentLoader.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Measuring\Measuring.fsproj">
