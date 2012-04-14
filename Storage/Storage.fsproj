@@ -75,6 +75,9 @@
     </None>
     <Compile Include="ExperimentRuntimeSaver.fs" />
     <Compile Include="ExperimentLoader.fs" />
+    <None Include="System.Data.SqlServerCe.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Measuring\Measuring.fsproj">
