@@ -97,6 +97,34 @@ exp.Run(true)
 #quit;;
 
 
+// ------ example of webserver
+
+
+open System.Net
+
+let address = "http://+:80/Temporary_Listen_Addresses/"
+let listener = new System.Net.HttpListener()
+listener.Prefixes.Add(address);
+listener.Start()
+let rec GetContextCallback(result:IAsyncResult) =
+  let context = listener.EndGetContext(result)
+  let request = context.Request
+  let relPath = request.Url.PathAndQuery.Substring("/Temporary_Listen_Addresses/".Length )
+  let tags = relPath.Split(["/"; "?"].ToArray(), StringSplitOptions.RemoveEmptyEntries)
+  let op = tags.[0]
+  let response = context.Response
+  let sb = new StringBuilder()
+  sb.Append(op) |> ignore
+  let buffer = System.Text.Encoding.UTF8.GetBytes(sb.ToString())
+  response.ContentLength64 = int64( buffer.Length)
+  use outputStream = response.OutputStream
+  outputStream.Write(buffer, 0, buffer.Length);
+  listener.BeginGetContext(new AsyncCallback(GetContextCallback), null) |> ignore
+
+listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+
+listener.Stop()
+
 
 //let db = new Energon.Measurement.Measurements(dbfile)
 let db = saver.LinqContext
