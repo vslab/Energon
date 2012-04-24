@@ -1,7 +1,8 @@
-﻿namespace Energon.Measuring
+﻿namespace Energon.Measuring.Database
 
 open System
 open System.Collections.Generic
+open Energon.Measuring
 
 
 /// a sensors, not usable, just a dummy representation from rthe database

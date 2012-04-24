@@ -105,7 +105,13 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
         results.Clear()
         experimentRunStopping.Trigger(self)
         if push then
-            Seq.iter (fun (s:GenericSensor) -> results.Add(s, (s :?> PushSensor).Results ) ) sensors
+            Seq.iter (fun (s:GenericSensor) -> 
+                match s with
+                | :? PushSensor as ps -> results.Add(s, ps.Results )
+                | :? RemoteSensor as rems -> results.Add(s, rems.Results )
+                | :? PullSensor as ps -> ()
+                | _ -> () // TODO: handle pull sensors
+                ) sensors
         else
             timer.Enabled <- false
             Seq.iter (fun (s:GenericSensor) -> results.Add(s, currentData.[s].ToArray() ) ) sensors

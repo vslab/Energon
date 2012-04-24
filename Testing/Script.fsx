@@ -97,34 +97,48 @@ exp.Run(true)
 #quit;;
 
 
-// ------ example of webserver
+// ------ remote experiment
+open Energon.Measuring.Remote
+
+// declare a remote sensor
+let r = new RemoteSensor("test", DataType.Unknown)
+// declare an experiment
+let e = new Experiment("test", [| proc; r :> GenericSensor |], 0, [| "arg1"; "arg2" |], [||], fun _ -> ())
+// the helper makes easy to handle remote loads and remote sensors
+let helper = new RemoteExperimentHelper(e)
+helper.Start()
+
+// a remote process starter (this should be run on the remote machine)
+let remote = new RemoteSensorHelper("127.0.0.1")
+remote.case([| "a1"; "b1" |]) // a new experiment case with its params
+remote.start() // experiment starting
+// experiment run, I have to send remote sensors values, in the same order as we declared the sensors
+remote.stop([| "1" |])  
+remote.start() // 2 runs
+remote.stop([| "2" |])  
+remote.case([| "a2"; "b2" |]) // a new case
+remote.start()
+remote.stop([| "3" |])  
+remote.start()
+remote.stop([| "4" |])  
 
 
-open System.Net
+helper.Stop()
 
-let address = "http://+:80/Temporary_Listen_Addresses/"
-let listener = new System.Net.HttpListener()
-listener.Prefixes.Add(address);
-listener.Start()
-let rec GetContextCallback(result:IAsyncResult) =
-  let context = listener.EndGetContext(result)
-  let request = context.Request
-  let relPath = request.Url.PathAndQuery.Substring("/Temporary_Listen_Addresses/".Length )
-  let tags = relPath.Split(["/"; "?"].ToArray(), StringSplitOptions.RemoveEmptyEntries)
-  let op = tags.[0]
-  let response = context.Response
-  let sb = new StringBuilder()
-  sb.Append(op) |> ignore
-  let buffer = System.Text.Encoding.UTF8.GetBytes(sb.ToString())
-  response.ContentLength64 = int64( buffer.Length)
-  use outputStream = response.OutputStream
-  outputStream.Write(buffer, 0, buffer.Length);
-  listener.BeginGetContext(new AsyncCallback(GetContextCallback), null) |> ignore
+e.Cases.Count
+let case = e.Cases.Item 1
+let run = case.Runs.Item 0
+run
 
-listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
 
-listener.Stop()
+let start() =
+    printf "start\n"
+let stop() =
+    printf "stop\n"
 
+let w = new webListener(start, stop)
+w.start()
+w.stop()
 
 //let db = new Energon.Measurement.Measurements(dbfile)
 let db = saver.LinqContext

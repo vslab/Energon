@@ -8,6 +8,7 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
     let resultsMeans = new Dictionary<GenericSensor, List<float*float>>()
     let means = new Dictionary<GenericSensor, float*float>()
     let startStop = new Queue<DateTime*DateTime>()
+    let runs = List<ExperimentRun>()
     let mutable push = false
     
     let mutable id = 0
@@ -36,6 +37,7 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
         Seq.iter (fun s -> resultsMeans.Add(s, new List<float*float>())) sensors
         let rec runIter i =
             let exp = new ExperimentRun(sensors)
+            runs.Add(exp)
             exp.NewReadingEvent.Add(fun (run, s, read) ->
                 let args = (self, run,s,read)
                 newReadingEvent.Trigger(args)
@@ -90,10 +92,11 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
         with get() = means
     member x.Sensors
         with get() = sensors
-    member x.IterCount
-        with get() = iter
     member x.StartStopTimes
         with get() = startStop.ToArray()
     member x.Args
         with get() = args
-
+    member x.Runs
+        with get() = runs
+    member x.Iterations
+        with get() = runs.Count

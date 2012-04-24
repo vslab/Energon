@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Database Name="Measurements" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Table Name="Environment">
+    <Type Name="Environment">
+      <Column Name="EnvironmentID" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="name" Member="Name" Type="System.String" DbType="NVarChar(256)" CanBeNull="true" />
+      <Column Name="note" Member="Note" Type="System.String" DbType="NText" CanBeNull="true" UpdateCheck="Never" />
+    </Type>
+  </Table>
+  <Table Name="ExperimentRuns">
+    <Type Name="ExperimentRuns">
+      <Column Name="ExperimentRunID" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="ExperimentID" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="args" Member="Args" Type="System.String" DbType="NVarChar(4000)" CanBeNull="true" />
+      <Column Name="start" Member="Start" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="end" Member="End" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+    </Type>
+  </Table>
+  <Table Name="Experiments">
+    <Type Name="Experiments">
+      <Column Name="ExperimentID" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="name" Member="Name" Type="System.String" DbType="NVarChar(256)" CanBeNull="true" />
+      <Column Name="note" Member="Note" Type="System.String" DbType="NText" CanBeNull="true" UpdateCheck="Never" />
+    </Type>
+  </Table>
+  <Table Name="Measurements" Member="Measurements1">
+    <Type Name="Measurements1">
+      <Column Name="MeasurementID" Type="System.Data.Linq.Binary" DbType="VarBinary(100) NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="value" Member="Value" Type="System.Double" DbType="Float" CanBeNull="true" />
+      <Column Name="row" Member="Row" Type="System.Data.Linq.Binary" DbType="VarBinary(256)" CanBeNull="true" />
+      <Column Name="name" Member="Name" Type="System.String" DbType="NVarChar(100)" CanBeNull="true" />
+      <Column Name="SensorID" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+    </Type>
+  </Table>
+  <Table Name="SensorClasses">
+    <Type Name="SensorClasses">
+      <Column Name="note" Member="Note" Type="System.String" DbType="NText" CanBeNull="true" UpdateCheck="Never" />
+      <Column Name="SensorName" Type="System.String" DbType="NVarChar(256) NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+    </Type>
+  </Table>
+  <Table Name="Sensors">
+    <Type Name="Sensors">
+      <Column Name="ExperimentRunID" Type="System.Guid" DbType="UniqueIdentifier" CanBeNull="true" />
+      <Column Name="SensorName" Type="System.String" DbType="NVarChar(256)" CanBeNull="true" />
+      <Column Name="SensorID" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+    </Type>
+  </Table>
+</Database>

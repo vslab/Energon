@@ -10,6 +10,7 @@ type Experiment(name:string, sensors:seq<GenericSensor>, iter:int, argNames:seq<
     let mutable note = ""
     let cases = new List<ExperimentCase>()
     let mutable id = 0
+    let mutable iterations = iter
 
     let newReadingEvent = new Event<Experiment * ExperimentCase * ExperimentRun * GenericSensor * Reading>()
     let experimentRunStarting = new Event<Experiment * ExperimentCase * ExperimentRun>()
@@ -78,5 +79,8 @@ type Experiment(name:string, sensors:seq<GenericSensor>, iter:int, argNames:seq<
         with get() = args
     member x.Cases
         with get() = cases
+    member x.Iterations
+        with get() = iterations
+        and set(v) = iterations <- v
 
 
