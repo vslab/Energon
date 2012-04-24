@@ -29,7 +29,22 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
     member x.ID
         with get() = id
         and set(v) = id <- v
-
+    
+    member x.AddExperimentRun(exp:ExperimentRun) =
+        exp.NewReadingEvent.Add(fun (run, s, read) ->
+            let args = (self, run,s,read)
+            newReadingEvent.Trigger(args)
+            )
+        exp.ExperimentRunStartingEvent.Add(fun (run) ->
+            let args = (self, run)
+            experimentRunStarting.Trigger(args)
+            )
+        exp.ExperimentRunStoppingEvent.Add(fun (run) ->
+            let args = (self, run)
+            experimentRunStopping.Trigger(args)
+            )
+        runs.Add(exp)
+        
     member x.Run(?isPush) =
         push <- defaultArg isPush false
         results.Clear()
@@ -37,19 +52,7 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
         Seq.iter (fun s -> resultsMeans.Add(s, new List<float*float>())) sensors
         let rec runIter i =
             let exp = new ExperimentRun(sensors)
-            runs.Add(exp)
-            exp.NewReadingEvent.Add(fun (run, s, read) ->
-                let args = (self, run,s,read)
-                newReadingEvent.Trigger(args)
-                )
-            exp.ExperimentRunStartingEvent.Add(fun (run) ->
-                let args = (self, run)
-                experimentRunStarting.Trigger(args)
-                )
-            exp.ExperimentRunStoppingEvent.Add(fun (run) ->
-                let args = (self, run)
-                experimentRunStopping.Trigger(args)
-                )
+            x.AddExperimentRun(exp)
             exp.Start(push)
             load(args)
             exp.Stop()

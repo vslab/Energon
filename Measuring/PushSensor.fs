@@ -20,6 +20,7 @@ type PushSensor(name:string, valueType, hz) =
     /// the last reading from the sensor
     let mutable lastr = new Reading(DateTime.Now, valueType, 0., null)  
     let timer = new System.Timers.Timer(interval())
+
     let checkTime() =
         let dt = interval() 
         let t = System.DateTime.Now 
@@ -35,11 +36,16 @@ type PushSensor(name:string, valueType, hz) =
             accumulator <- 0.
             newValue.Trigger(lastv)
     //timer.Interval <- dt - elapsed
+
+
     do
         timer.AutoReset <- true
         timer.Enabled <- false
         timer.Elapsed.Add(fun _ -> checkTime())
   
+    [<CLIEvent>]
+    member this.NewValue = newValue.Publish
+
     ///<summary> Starts acquiring data.
     ///</summary>
     override u.Start() = 

@@ -104,6 +104,8 @@ open Energon.Measuring.Remote
 let r = new RemoteSensor("test", DataType.Unknown)
 // declare an experiment
 let e = new Experiment("test", [| proc; r :> GenericSensor |], 0, [| "arg1"; "arg2" |], [||], fun _ -> ())
+// db helper
+let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
 // the helper makes easy to handle remote loads and remote sensors
 let helper = new RemoteExperimentHelper(e)
 helper.Start()

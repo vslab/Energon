@@ -29,6 +29,21 @@ type Experiment(name:string, sensors:seq<GenericSensor>, iter:int, argNames:seq<
         with get() = id
         and set(v) = id <- v
 
+    member x.AddExperimentCase(case:ExperimentCase) =
+        case.NewReadingEvent.Add(fun (case, run, sensor, reading) ->
+            let args = (self, case, run, sensor, reading)
+            newReadingEvent.Trigger(args)
+            )
+        case.ExperimentRunStartingEvent.Add(fun (case, run) ->
+            let args = (self, case, run)
+            experimentRunStarting.Trigger(args)
+            )
+        case.ExperimentRunStoppingEvent.Add(fun (case, run) ->
+            let args = (self, case, run)
+            experimentRunStopping.Trigger(args)
+            )
+        cases.Add(case)
+
     member x.Run(?isPush) =
         push <- defaultArg isPush false
         results.Clear()
@@ -37,19 +52,7 @@ type Experiment(name:string, sensors:seq<GenericSensor>, iter:int, argNames:seq<
         sensors |> Seq.iter (fun s -> results.Add(s, new List<List<Reading[]>>()); means.Add(s, new List<(float*float)>()) )
         let runCase (a:seq<obj>) =
             let case = new ExperimentCase(sensors, iter, a, load, wait)
-            case.NewReadingEvent.Add(fun (case, run, sensor, reading) ->
-                let args = (self, case, run, sensor, reading)
-                newReadingEvent.Trigger(args)
-                )
-            case.ExperimentRunStartingEvent.Add(fun (case, run) ->
-                let args = (self, case, run)
-                experimentRunStarting.Trigger(args)
-                )
-            case.ExperimentRunStoppingEvent.Add(fun (case, run) ->
-                let args = (self, case, run)
-                experimentRunStopping.Trigger(args)
-                )
-            cases.Add(case)
+            x.AddExperimentCase(case)
             case.Run()
             sensors |> Seq.iter (fun s -> results.[s].Add(case.Results.[s]);means.[s].Add(case.MeansAndStdDev.[s]) )
         args |> Seq.iter runCase 

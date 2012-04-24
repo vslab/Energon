@@ -8,6 +8,7 @@ open Microsoft.FSharp.Linq
 open System.Data.Linq
 open System.Data.SqlServerCe;
 open Energon.Measuring
+open Energon.Measuring.Database
 open System.Text
 open Energon.SQLCE
 open System.Collections.Generic
@@ -77,7 +78,7 @@ let ExperimentLoader(expID:int, file:string) =
     dbCases |> Seq.iter (fun (x:ExperimentCases) ->
             let split = [";"].ToArray()
             let args = x.Args.Split(split, StringSplitOptions.RemoveEmptyEntries)
-            let c = new DatabaseExperimentCase(sensorSeq, exp.IterCount, args)
+            let c = new DatabaseExperimentCase(sensorSeq, exp.IterCount,  args |> Seq.map (fun x -> x :> obj) )
             exp.ExperimentCases.Add(c)
             let dbRuns = runsOfCase x
             dbRuns |> Seq.iter ( fun (r:ExperimentRuns) ->

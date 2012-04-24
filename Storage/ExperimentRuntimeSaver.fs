@@ -27,7 +27,7 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
     let second (a,b) = b
     let argsToString (args:seq<obj>) = 
         let sb = new StringBuilder()
-        Seq.iter2 (fun x y -> sb.AppendFormat("{0}={1},", x, y.ToString()) |> ignore ) exp.ArgNames args
+        Seq.iter2 (fun x y -> sb.AppendFormat("{0}={1},", x, y) |> ignore ) exp.ArgNames args
         sb.ToString()
 
     let handleSensor (s:Energon.Measuring.GenericSensor) =

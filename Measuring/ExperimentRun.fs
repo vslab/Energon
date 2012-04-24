@@ -95,6 +95,14 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
             timer.Enabled <- true
             currentData.Clear()
             Seq.iter (fun s -> currentData.Add(s, new Queue<Reading>())) sensors
+        else
+            let handleSensor (s:GenericSensor) =
+                match s with
+                | :? PushSensor as ps -> ps.NewValue.Add(fun (r:Reading) -> newReadingEvent.Trigger(self, s, r))
+                | :? RemoteSensor as ps -> ps.NewValue.Add(fun (r:Reading) -> newReadingEvent.Trigger(self, s, r))
+                | _ -> ()
+                ()
+            sensors |> Seq.iter handleSensor
 
     ///<summary> End the experiment
     ///</summary>

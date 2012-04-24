@@ -75,7 +75,7 @@ let SaveExperiment (exp:Energon.Measuring.Experiment) file =
         expCase.Args <- argsToString c.Args
         db.ExperimentCases.InsertOnSubmit(expCase)
         db.SubmitChanges()
-        let maxi = c.IterCount - 1
+        let maxi = c.Iterations - 1
         for i in 0..maxi do
             let first (a,b) = a
             let second (a,b) = b
