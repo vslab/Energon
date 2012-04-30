@@ -1,4 +1,4 @@
-﻿module Energon.Storage
+﻿module Energon.Storage.Loader
 
 open System
 open Microsoft.FSharp.Data.TypeProviders

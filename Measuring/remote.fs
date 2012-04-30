@@ -66,7 +66,9 @@ type RemoteExperimentHelper(e:Experiment) =
         let er = case.Runs.Item (case.Runs.Count - 1)
         er.Stop()
     let caseCallback(args) =
-        let newCase = new ExperimentCase(e.Sensors, 0, Seq.map (fun (s:string) -> string :> obj) (Seq.skip 1 args) , (fun _ -> ()) )
+        let tail = Seq.skip 1 args
+        let argsAsObj = tail |> Seq.map (fun (s:string) -> (s :> obj))
+        let newCase = new ExperimentCase(e.Sensors, 0, argsAsObj , (fun _ -> ()) )
         e.AddExperimentCase newCase
     let w = new WebListener(start, stop, caseCallback)
 

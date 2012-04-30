@@ -13,6 +13,7 @@ open Energon.SQLCE
 
 
 type ExperimentRuntimeSaver(exp:Experiment, file) =
+    let l = ref 0 
     let getConStr file = 
         let conStr = "Data Source=" + file + ";" in
         conStr;
@@ -27,7 +28,11 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
     let second (a,b) = b
     let argsToString (args:seq<obj>) = 
         let sb = new StringBuilder()
-        Seq.iter2 (fun x y -> sb.AppendFormat("{0}={1},", x, y) |> ignore ) exp.ArgNames args
+        args |> Seq.iter (fun x -> sb.AppendFormat(@"{0};", x.ToString()) |> ignore )
+        sb.ToString()
+    let argsNamesToString (args:seq<string>) = 
+        let sb = new StringBuilder()
+        args |> Seq.iter (fun x -> sb.AppendFormat(@"{0};", x) |> ignore )
         sb.ToString()
 
     let handleSensor (s:Energon.Measuring.GenericSensor) =
@@ -40,8 +45,10 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
             // create one
             let newsensorclass = new Energon.SQLCE.SensorClasses()
             newsensorclass.SensorName <- s.Name
-            db.SensorClasses.InsertOnSubmit(newsensorclass)
-            db.SubmitChanges()
+            lock l (fun () ->
+                db.SensorClasses.InsertOnSubmit(newsensorclass)
+                db.SubmitChanges()
+                )
             newsensorclass
     let sensors = Seq.map (fun s1 -> handleSensor s1 ) (exp.Sensors.ToArray())
 
@@ -53,16 +60,19 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         experiment.Name <- exp.Name
         experiment.Note <- exp.Note
         experiment.Iter <- new Nullable<int>( exp.IterCount)
-        db.Experiments.InsertOnSubmit(experiment)
-        db.SubmitChanges()
+        experiment.ArgNames <- argsNamesToString (exp.ArgNames)
+        lock l (fun () ->
+            db.Experiments.InsertOnSubmit(experiment)
+            db.SubmitChanges())
         exp.ID <- experiment.Id
 
     let saveExperimentCase (exp:Experiment) (case:ExperimentCase) =
         let expCase = new Energon.SQLCE.ExperimentCases()
         expCase.Experiment_id <- exp.ID
-        expCase.Args <- argsToString case.Args
-        db.ExperimentCases.InsertOnSubmit(expCase)
-        db.SubmitChanges()
+        expCase.Args <- argsToString (case.Args)
+        lock l (fun () ->
+            db.ExperimentCases.InsertOnSubmit(expCase)
+            db.SubmitChanges())
         case.ID <- expCase.Id
 
     let saveExperimentRun (c:ExperimentCase) (r:ExperimentRun) =
@@ -71,28 +81,32 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         run.Args <- argsToString c.Args
         run.Start <- new Nullable<DateTime>( r.StartTime )
         //run.End <- new Nullable<DateTime>( r.EndTime )
-        db.ExperimentRuns.InsertOnSubmit(run)
-        db.SubmitChanges()
+        lock l (fun() ->
+            db.ExperimentRuns.InsertOnSubmit(run)
+            db.SubmitChanges())
         r.ID <- run.Id
         let handleSensor (s:GenericSensor) = 
             let sensor = new Energon.SQLCE.Sensors()
             sensor.Experiment_run_id <- run.Id
             let sensorClass = sensorClassFromSensor s
             sensor.Sensor_class_id <- sensorClass.Id
-            db.Sensors.InsertOnSubmit(sensor)
-            db.SubmitChanges()
+            lock l (fun () ->
+                db.Sensors.InsertOnSubmit(sensor)
+                db.SubmitChanges())
             s.ID <- sensor.Id
         c.Sensors |> Seq.iter handleSensor
 
     let experimentRunStarting (r:ExperimentRun) =
         let run = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Id = r.ID).First()
         run.Start <- new Nullable<DateTime>( r.StartTime )
-        db.SubmitChanges()
+        lock l (fun() ->
+            db.SubmitChanges())
 
     let experimentRunStopping (r:ExperimentRun) =
         let run = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Id = r.ID).First()
         run.End <- new Nullable<DateTime>( r.EndTime )
-        db.SubmitChanges()
+        lock l (fun() ->
+            db.SubmitChanges())
 
     let saveReading (run:ExperimentRun) (sensor:GenericSensor) (reading:Reading) =
         let r = new Measurements1()
@@ -100,8 +114,9 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         r.Sensor_id <- sensor.ID
         r.Value <- reading.Value
         // TODO: RAW
-        db.Measurements1.InsertOnSubmit(r)
-        db.SubmitChanges()
+        lock l (fun() ->
+            db.Measurements1.InsertOnSubmit(r)
+            db.SubmitChanges())
 
     let handleReading(exp:Experiment, case:ExperimentCase, run:ExperimentRun, sensor:GenericSensor, reading:Reading) =
         saveReading run sensor reading

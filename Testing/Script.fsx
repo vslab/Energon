@@ -124,11 +124,11 @@ remote.stop([| "3" |])
 remote.start()
 remote.stop([| "4" |])  
 
-
 helper.Stop()
 
 e.Cases.Count
-let case = e.Cases.Item 1
+let case = e.Cases.Item 0
+case
 let run = case.Runs.Item 0
 run
 

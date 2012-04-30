@@ -32,16 +32,16 @@ type ExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, load: s
     
     member x.AddExperimentRun(exp:ExperimentRun) =
         exp.NewReadingEvent.Add(fun (run, s, read) ->
-            let args = (self, run,s,read)
-            newReadingEvent.Trigger(args)
+            let arguments = (self, run,s,read)
+            newReadingEvent.Trigger(arguments)
             )
         exp.ExperimentRunStartingEvent.Add(fun (run) ->
-            let args = (self, run)
-            experimentRunStarting.Trigger(args)
+            let arguments = (self, run)
+            experimentRunStarting.Trigger(arguments)
             )
         exp.ExperimentRunStoppingEvent.Add(fun (run) ->
-            let args = (self, run)
-            experimentRunStopping.Trigger(args)
+            let arguments = (self, run)
+            experimentRunStopping.Trigger(arguments)
             )
         runs.Add(exp)
         
