@@ -99,9 +99,17 @@ let sensors = [| r1 :> GenericSensor ; extechWatt :> GenericSensor |]
 let e = new Experiment("saxpy_test4", sensors, 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
 // db helper
 let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
+
+saver.OpenConnection()
+
 // the helper makes easy to handle remote loads and remote sensors
 let helper = new RemoteExperimentHelper(e)
 helper.Start()
+
+
+helper.Stop()
+
+
 
 // a remote process starter (this should be run on the remote machine)
 let remote = new RemoteSensorHelper("127.0.0.1")
@@ -111,7 +119,6 @@ remote.start() // experiment starting
 // experiment run, I have to send remote sensors values, in the same order as we declared the sensors
 remote.stop([| "0.1" |])  
 
-helper.Stop()
 
 
 e.Cases.Count
