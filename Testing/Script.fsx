@@ -113,9 +113,11 @@ helper.Start()
 // a remote process starter (this should be run on the remote machine)
 let remote = new RemoteSensorHelper("127.0.0.1")
 remote.case([| "a1"; "b1" |]) // a new experiment case with its params
+
 remote.start() // experiment starting
 // experiment run, I have to send remote sensors values, in the same order as we declared the sensors
-remote.stop([| "1" |])  
+remote.stop([| "1" |]) 
+
 remote.start() // 2 runs
 remote.stop([| "2" |])  
 remote.case([| "a2"; "b2" |]) // a new case

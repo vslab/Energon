@@ -93,14 +93,14 @@ type RemoteSensorHelper(ip:string) =
     member x.stop(par:seq<string>) =
         let sb = new System.Text.StringBuilder()
         sb.AppendFormat(@"{0}/stop", address) |> ignore
-        par |> Seq.iter (fun s -> sb.AppendFormat(@"/{0}", s) |> ignore)
+        par |> Seq.iter (fun s -> sb.AppendFormat(@"/{0}", System.Web.HttpUtility.UrlEncode(s)) |> ignore)
         let addr = sb.ToString()
         try
             wc.DownloadString(addr) |> ignore
             true
         with 
             | _ -> false
-    member x.case(args:seq<string>) =
+    member x.experimentCase(args:seq<string>) =
         let sb = new System.Text.StringBuilder()
         sb.AppendFormat(@"{0}/case", address) |> ignore
         args |> Seq.iter (fun s -> sb.AppendFormat(@"/{0}", s) |> ignore)
