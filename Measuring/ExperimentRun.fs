@@ -33,6 +33,8 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
 
     let mutable id = 0
 
+    let mutable (handler:Reading->unit) = fun (r:Reading) -> ()
+
     [<CLIEvent>]
     member this.NewReadingEvent = newReadingEvent.Publish
 
@@ -97,9 +99,12 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
             Seq.iter (fun s -> currentData.Add(s, new Queue<Reading>())) sensors
         else
             let handleSensor (s:GenericSensor) =
+                handler <- fun (r:Reading) -> newReadingEvent.Trigger(self, s, r)
                 match s with
-                | :? PushSensor as ps -> ps.NewValue.Add(fun (r:Reading) -> newReadingEvent.Trigger(self, s, r))
-                | :? RemoteSensor as ps -> ps.NewValue.Add(fun (r:Reading) -> newReadingEvent.Trigger(self, s, r))
+                | :? PushSensor as ps -> 
+                    ps.NewValue.Add(handler)
+                | :? RemoteSensor as ps -> 
+                    ps.NewValue.Add(handler)
                 | _ -> ()
                 ()
             sensors |> Seq.iter handleSensor
@@ -135,6 +140,17 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
                 (mean, sqrt(variance))
         // means and std. dev.
         sensors |> Seq.iter (fun s -> means.Add(s, meanAndStdDevReading results.[s])) 
+        
+        let handleSensor (s:GenericSensor) =
+                match s with
+                | :? PushSensor as ps -> 
+                    ps.ResetHandlers()
+                | :? RemoteSensor as ps -> 
+                    ps.ResetHandlers()
+                | _ -> ()
+                ()
+        sensors |> Seq.iter handleSensor
+
 
 
         

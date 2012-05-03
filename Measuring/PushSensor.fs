@@ -5,7 +5,7 @@ open System.Threading
   
 type PushSensor(name:string, valueType, hz) = 
     inherit PullSensor(name, valueType)
-    let newValue = Event<Reading>()
+    let mutable newValue = new Event<Reading>()
     let mutable size = 0
     let mutable error = 0.
     let mutable running = false
@@ -45,6 +45,9 @@ type PushSensor(name:string, valueType, hz) =
   
     [<CLIEvent>]
     member this.NewValue = newValue.Publish
+
+    member this.ResetHandlers() =
+        newValue <- new Event<Reading>()
 
     ///<summary> Starts acquiring data.
     ///</summary>
@@ -86,7 +89,7 @@ type PushSensor(name:string, valueType, hz) =
     ///<summary> Deletes the buffer.
     ///</summary>
     override x.Reset() =
-        buffer.Clear() 
+        buffer.Clear()
   
     ///<summary> Return the Readings as a sequence
     ///</summary>

@@ -1,7 +1,8 @@
-﻿#I @"C:\Users\Davide\Desktop\Projects\Energon\bin\Debug"
+﻿#I @"C:\Users\root\Desktop\Energon\bin\Debug"
 #r @"Energon.Measuring.dll"
 open Energon.Measuring
 
+(*
 // a couple of sensors...
 let proc = new PerfCounter("Process", "% Processor Time", 1.)
 proc.Instance <- "FSI"
@@ -31,7 +32,7 @@ let args = seq {
             }
     }
 
-
+*)
 
 (*
 let e = new Experiment("fibonacci 40..42", [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
@@ -68,11 +69,92 @@ open System.Data.SqlServerCe;
 open Energon.Measuring
 open System.Text
 open System.Data.DataSetExtensions
-let dbfile = "C:\\Users\\Davide\\Desktop\\Projects\\Energon\\test.sdf"
+let dbfile = @"C:\Users\root\Desktop\Energon\test.sdf"
+
+// ------ remote experiment
+open Energon.Measuring.Remote
+
+#r "Energon.Extech.dll"
+
+open Energon.Extech380803
+
+//let extechAmp = new Energon.Extech380803.Extech380803Sensor("extechAmp", DataType.Ampere, 1.0)
+let extechWatt = new Energon.Extech380803.Extech380803Sensor("extechWatt", DataType.Watt, 1.0)
+//let extechPF = new Energon.Extech380803.Extech380803Sensor("extechPF", DataType.PowerFactor, 1.0)
+//let extechV = new Energon.Extech380803.Extech380803Sensor("extechV", DataType.Volt, 1.0)
+(*
+extechPF.Close()
+extechAmp.Close()
+extechWatt.Close()
+extechV.Close()
+*)
+// declare a remote sensor
+let r1 = new RemoteSensor("completionTime", DataType.Unknown)
+
+let sensors = [| r1 :> GenericSensor ; extechWatt :> GenericSensor |]
+//let sensors = [|extechAmp :> GenericSensor; extechWatt :> GenericSensor; extechPF :> GenericSensor; extechV :> GenericSensor; r1 :> GenericSensor |]
+//let sensors = [| r1 :> GenericSensor |]
+
+// declare an experiment
+let e = new Experiment("saxpy_test4", sensors, 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+// db helper
+let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
+// the helper makes easy to handle remote loads and remote sensors
+let helper = new RemoteExperimentHelper(e)
+helper.Start()
+
+// a remote process starter (this should be run on the remote machine)
+let remote = new RemoteSensorHelper("127.0.0.1")
+remote.case([| "2"; "1"; "1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1"; |]) // a new experiment case with its params
+
+remote.start() // experiment starting
+// experiment run, I have to send remote sensors values, in the same order as we declared the sensors
+remote.stop([| "0.1" |])  
+
+helper.Stop()
+
+
+e.Cases.Count
+let case = e.Cases.Item 0
+case
+let run = case.Runs.Item 0
+run
+
+
+let start() =
+    printf "start\n"
+let stop() =
+    printf "stop\n"
+
+let w = new webListener(start, stop)
+w.start()
+w.stop()
+
+//let db = new Energon.Measurement.Measurements(dbfile)
+let db = saver.LinqContext
+db.Experiments
+let measurements = db.Measurements1
+let sel = measurements.First(fun (m:Energon.SQLCE.Measurements1) -> m.Sensor_id = 205)
+sel
+measurements.DeleteOnSubmit(sel)
+db.SubmitChanges()
+
+let exp = db.Experiments.Where(fun (x:Experiments) -> x.Name.StartsWith("fibonacci")).First()
+printf "%s\n" exp.Name
+let cases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = exp.Id)
+let printCase (c:ExperimentCases) =
+    printf "%s=%s" exp.ArgNames c.Args
+    let runs = db.ExperimentRuns.Where(fun (r:ExperimentRuns) -> r.Experiment_case_id = c.Id)
+
+let db2 = Energon.CompactSQL.GetLinqContext dbfile
+db
+
+#quit;;
+
 
 //CompactSQL
 //Energon.CompactSQL.SaveExperiment e dbfile
-
+(*
 // example getting data from db
 open Energon.SQLCE
 open Energon.CompactSQL
@@ -95,72 +177,10 @@ let saver = new Energon.Storage.ExperimentRuntimeSaver(exp, dbfile)
 exp.Run(true)
 
 #quit;;
+*)
 
 
-// ------ remote experiment
-open Energon.Measuring.Remote
 
-// declare a remote sensor
-let r = new RemoteSensor("test", DataType.Unknown)
-// declare an experiment
-let e = new Experiment("test", [| proc; r :> GenericSensor |], 0, [| "arg1"; "arg2" |], [||], fun _ -> ())
-// db helper
-let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
-// the helper makes easy to handle remote loads and remote sensors
-let helper = new RemoteExperimentHelper(e)
-helper.Start()
-
-// a remote process starter (this should be run on the remote machine)
-let remote = new RemoteSensorHelper("127.0.0.1")
-remote.case([| "a1"; "b1" |]) // a new experiment case with its params
-
-remote.start() // experiment starting
-// experiment run, I have to send remote sensors values, in the same order as we declared the sensors
-remote.stop([| "1" |]) 
-
-remote.start() // 2 runs
-remote.stop([| "2" |])  
-remote.case([| "a2"; "b2" |]) // a new case
-remote.start()
-remote.stop([| "3" |])  
-remote.start()
-remote.stop([| "4" |])  
-
-helper.Stop()
-
-e.Cases.Count
-let case = e.Cases.Item 0
-case
-let run = case.Runs.Item 0
-run
-
-
-let start() =
-    printf "start\n"
-let stop() =
-    printf "stop\n"
-
-let w = new webListener(start, stop)
-w.start()
-w.stop()
-
-//let db = new Energon.Measurement.Measurements(dbfile)
-let db = saver.LinqContext
-db.Experiments
-db.Measurements1
-
-
-let exp = db.Experiments.Where(fun (x:Experiments) -> x.Name.StartsWith("fibonacci")).First()
-printf "%s\n" exp.Name
-let cases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = exp.Id)
-let printCase (c:ExperimentCases) =
-    printf "%s=%s" exp.ArgNames c.Args
-    let runs = db.ExperimentRuns.Where(fun (r:ExperimentRuns) -> r.Experiment_case_id = c.Id)
-
-let db2 = Energon.CompactSQL.GetLinqContext dbfile
-db
-
-#quit;;
 
 exp.Results
 exp.MeansAndStdDev
