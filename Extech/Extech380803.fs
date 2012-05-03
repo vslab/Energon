@@ -79,7 +79,10 @@ type Extech380803MultiSensor() as self =
                     len := !len + port.Read(rbuf, !len, 20 - !len)
                 if !len = 20 then
                     for i in 0..5..(!len - 5) do
-                        parse rbuf i
+                        try
+                            parse rbuf i
+                        with
+                        | _ -> ()
                     //System.Console.WriteLine(sb.ToString())
                 let elapsed = (DateTime.Now - tstart).Milliseconds
                 if dt > elapsed then
