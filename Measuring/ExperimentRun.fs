@@ -132,12 +132,15 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
             if Seq.isEmpty numSeq then
                 (0.,0.)
             else
-                let sqr (x:float) = x * x
-                let mean = 
-                    numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.average
-                let variance = 
-                    numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.averageBy (fun x -> sqr(x - mean))
-                (mean, sqrt(variance))
+                try
+                    let sqr (x:float) = x * x
+                    let mean = 
+                        numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.average
+                    let variance = 
+                        numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.averageBy (fun x -> sqr(x - mean))
+                    (mean, sqrt(variance))
+                with
+                | _ -> (0.0,0.0)
         // means and std. dev.
         sensors |> Seq.iter (fun s -> means.Add(s, meanAndStdDevReading results.[s])) 
         

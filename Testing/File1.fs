@@ -3,40 +3,102 @@
 open Energon.Measuring
 open System
 
+open Energon.Measuring.Remote
+
+
+open Energon.Extech380803
+
+
 [<EntryPoint>]
 let main args =
-    let proc = new PerfCounter("Process", "% Processor Time", 1.)
-    proc.Instance <- "FSI"
-    let proc2 = new PerfCounter("Process", "% User Time", 1.)
-    proc2.Instance <- "FSI"
 
-    //define an exepriment
-    let exp = new ExperimentRun([| proc; proc2 |])
 
-    // something that uses CPU/mem
-    let rec fib(n) = 
-        match n with
-        | 0 -> 0
-        | 1 -> 1
-        | x -> fib (x-1) + fib (x-2)
 
-    // do something for some time
-    printfn "starting..." 
-    // the experiment starts
-    exp.Start(true)
-    System.Threading.Thread.Sleep(1000)
-    printfn "%d" (fib 40)
-    System.Threading.Thread.Sleep(1000)
-    // experiment is over
-    exp.Stop()
-    printfn "...finished"
+    (*
 
-    printfn "exp.Results.[proc2].Length=%d" exp.Results.[proc2].Length
+    #r "FSharp.PowerPack.Linq.dll"
+    #r "FSharp.Data.TypeProviders.dll"
 
-    //exp.Start()
-    //System.Threading.Thread.Sleep(3000)
-    //exp.Stop()
-    //printfn "exp.Results.[proc2].Length=%d" exp.Results.[proc2].Length
+    #r "System.Data.DataSetExtensions.dll"
+    #r "System.Core.dll"
+    *)
+    let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.sdf"
+
+    // ------ remote experiment
+
+    //let extechAmp = new Energon.Extech380803.Extech380803Sensor("extechAmp", DataType.Ampere, 1.0)
+    let extechWatt = new Energon.Extech380803.Extech380803Sensor("extechWatt", DataType.Watt, 1.0)
+    //let extechPF = new Energon.Extech380803.Extech380803Sensor("extechPF", DataType.PowerFactor, 1.0)
+    //let extechV = new Energon.Extech380803.Extech380803Sensor("extechV", DataType.Volt, 1.0)
+    (*
+    extechPF.Close()
+    extechAmp.Close()
+    extechWatt.Close()
+    extechV.Close()
+    *)
+    // declare a remote sensor
+    let compl = new RemoteSensor("completionTime", DataType.Unknown)
+    let gpubusy = new RemoteSensor("gpuBusy", DataType.Unknown)
+    let aluInsts = new RemoteSensor("aluInsts", DataType.Unknown)
+    let fetchInsts = new RemoteSensor("fetchInsts", DataType.Unknown)
+    let wrInsts = new RemoteSensor("wrInsts", DataType.Unknown)
+    let waveFronts = new RemoteSensor("waveFronts", DataType.Unknown)
+    let AluBusy = new RemoteSensor("AluBusy", DataType.Unknown)
+    let aluFetchRatio = new RemoteSensor("aluFetchRatio", DataType.Unknown)
+    let aluPacking = new RemoteSensor("aluPacking", DataType.Unknown)
+    let fetchUnitBusy = new RemoteSensor("fetchUnitBusy", DataType.Unknown)
+    let fetchUnitStalled = new RemoteSensor("fetchUnitStalled", DataType.Unknown)
+    let fetchSize = new RemoteSensor("fetchSize", DataType.Unknown)
+    let cacheHit = new RemoteSensor("cacheHit", DataType.Unknown)
+    let writeUnitStalled = new RemoteSensor("writeUnitStalled", DataType.Unknown)
+    let ldsFetchInst = new RemoteSensor("ldsFetchInst", DataType.Unknown)
+    let ldsWrInsts = new RemoteSensor("ldsWrInsts", DataType.Unknown)
+    let aluStalledByLds = new RemoteSensor("aluStalledByLds", DataType.Unknown)
+    let ldsBankConfl = new RemoteSensor("ldsBankConfl", DataType.Unknown)
+    let fastPath = new RemoteSensor("fastPath", DataType.Unknown)
+    let completePath = new RemoteSensor("completePath", DataType.Unknown)
+    let pathUtil = new RemoteSensor("pathUtil", DataType.Unknown)
+
+    let sensors = [| compl :> GenericSensor ; 
+                     gpubusy :> GenericSensor ;
+                     aluInsts :> GenericSensor ;
+                     fetchInsts :> GenericSensor ;
+                     wrInsts :> GenericSensor ;
+                     waveFronts :> GenericSensor ;
+                     AluBusy :> GenericSensor ;
+                     aluFetchRatio :> GenericSensor ;
+                     aluPacking :> GenericSensor ;
+                     fetchUnitBusy :> GenericSensor ;
+                     fetchUnitStalled :> GenericSensor ;
+                     fetchSize :> GenericSensor ;
+                     cacheHit :> GenericSensor ;
+                     writeUnitStalled :> GenericSensor ;
+                     ldsFetchInst :> GenericSensor ;
+                     ldsWrInsts :> GenericSensor ;
+                     aluStalledByLds :> GenericSensor ;
+                     ldsBankConfl :> GenericSensor ;
+                     fastPath :> GenericSensor ;
+                     completePath :> GenericSensor ;
+                     pathUtil :> GenericSensor ;
+                    extechWatt :> GenericSensor |]
+    //let sensors = [|extechAmp :> GenericSensor; extechWatt :> GenericSensor; extechPF :> GenericSensor; extechV :> GenericSensor; r1 :> GenericSensor |]
+    //let sensors = [| r1 :> GenericSensor |]
+
+    // declare an experiment
+    let e = new Experiment("saxpy_openCL", sensors, 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+    // db helper
+    let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
+
+    // the helper makes easy to handle remote loads and remote sensors
+    let helper = new RemoteExperimentHelper(e)
+    helper.Start()
+
+    Console.WriteLine("press return to stop the test")
+    Console.ReadLine()
+
+
+    helper.Stop()
+
 
     Console.ReadLine()
     0

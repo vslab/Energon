@@ -39,6 +39,11 @@
     <None Include="Script.fsx" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Extech\Extech.fsproj">
+      <Name>Extech</Name>
+      <Project>{cae59e8e-d0a1-46a2-8e6d-f2cc880a97a1}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\SqlCompactDb\Measurement\SQLCE.csproj">
       <Name>SQLCE</Name>
       <Project>{7675a39a-3b2c-45d6-a4e6-2f5f07b0877e}</Project>
@@ -54,6 +59,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Data.SqlServerCe, Version=3.5.1.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
     <ProjectReference Include="..\Measuring\Measuring.fsproj">
       <Name>Measuring</Name>

@@ -61,7 +61,6 @@ type RemoteExperimentHelper(e:Experiment) =
             match s with
             | :? RemoteSensor as rs -> 
                 let raw = vq.Dequeue()
-                printf "%s\n" raw
                 let ci = System.Globalization.CultureInfo.InstalledUICulture
                 let ni =  ci.NumberFormat.Clone()  :?> (System.Globalization.NumberFormatInfo)
                 ni.NumberDecimalSeparator <- "."

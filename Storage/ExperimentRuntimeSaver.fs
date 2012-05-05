@@ -10,6 +10,7 @@ open System.Data.SqlServerCe;
 open Energon.Measuring
 open System.Text
 open Energon.SQLCE
+open System.Collections.Generic
 
 
 type ExperimentRuntimeSaver(exp:Experiment, file) =
@@ -23,7 +24,10 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         if (context.DatabaseExists() = false) then
              context.CreateDatabase()
         context
-    let db = GetLinqContext file
+    let db = 
+        let context = GetLinqContext file
+        context.Connection.Open()
+        context
     let first (a,b) = a
     let second (a,b) = b
     let argsToString (args:seq<obj>) = 
@@ -40,7 +44,8 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         let sensorclasses = db.SensorClasses.Where(fun (x:SensorClasses) -> x.SensorName.ToLower() = s.Name.ToLower() )
         if (sensorclasses.Count() > 0) then
             // sensor class already present
-            sensorclasses.First()
+            let s = sensorclasses.First()
+            s
         else
             // create one
             let newsensorclass = new Energon.SQLCE.SensorClasses()
@@ -104,11 +109,11 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
             //let t = db.Connection.BeginTransaction()
             //db.Transaction <- t
             db.Sensors.InsertOnSubmit(sensor)
-            db.SubmitChanges(ConflictMode.ContinueOnConflict)
             //t.Commit()
             s.ID <- sensor.Id
         c.Sensors |> Seq.iter handleSensor
-
+        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        
     let experimentRunStarting (r:ExperimentRun) =
         let run = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Id = r.ID).First()
         run.Start <- new Nullable<DateTime>( r.StartTime )
@@ -116,14 +121,8 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         //db.Transaction <- t
         db.SubmitChanges(ConflictMode.ContinueOnConflict)
         //t.Commit()
-        
-    let experimentRunStopping (r:ExperimentRun) =
-        let run = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Id = r.ID).First()
-        run.End <- new Nullable<DateTime>( r.EndTime )
-        //let t = db.Connection.BeginTransaction()
-        //db.Transaction <- t
-        db.SubmitChanges(ConflictMode.ContinueOnConflict)
-        //t.Commit()
+
+    let readingsList = new List<Experiment*ExperimentCase*ExperimentRun*GenericSensor*Reading>()
 
     let saveReading (run:ExperimentRun) (sensor:GenericSensor) (reading:Reading) =
         let r = new Measurements1()
@@ -133,13 +132,27 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         // TODO: RAW
         //let t = db.Connection.BeginTransaction()
         //db.Transaction <- t
-
-        db.Measurements1.InsertOnSubmit(r)
-        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        try
+            db.Measurements1.InsertOnSubmit(r)
+            db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        with
+        | _ -> printf "exception saving measure\n"
         //t.Commit()
 
+    let experimentRunStopping (r:ExperimentRun) =
+        let run = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Id = r.ID).First()
+        run.End <- new Nullable<DateTime>( r.EndTime )
+        //let t = db.Connection.BeginTransaction()
+        //db.Transaction <- t
+        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        //t.Commit()
+        for (e,c,r,s,read) in readingsList do
+            saveReading r s read
+        readingsList.Clear()
+
     let handleReading(exp:Experiment, case:ExperimentCase, run:ExperimentRun, sensor:GenericSensor, reading:Reading) =
-        saveReading run sensor reading
+        readingsList.Add(exp,case,run,sensor,reading)
+        //saveReading run sensor reading
     do
         exp.NewReadingEvent.Add(handleReading)
         exp.ExperimentRunStartingEvent.Add(fun (exp, case, run) -> 
@@ -151,16 +164,12 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
                 saveExperimentRun case run
             experimentRunStarting run 
             )
-        exp.ExperimentRunStoppingEvent.Add(fun (exp, case, run) -> experimentRunStopping run )
+        exp.ExperimentRunStoppingEvent.Add(fun (exp, case, run) -> 
+            experimentRunStopping run )
 
-    member x.OpenConnection() =
-        db.Connection.Open()
 
     member x.LinqContext
         with get() = db
 
-    member x.CloseDB() =
-        db.Connection.Close()
-        db.Dispose()        
 
 
