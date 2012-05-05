@@ -116,7 +116,6 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
         running <- false
         Seq.iter (fun (s:GenericSensor) -> s.Stop()) sensors
         results.Clear()
-        experimentRunStopping.Trigger(self)
         if push then
             Seq.iter (fun (s:GenericSensor) -> 
                 match s with
@@ -128,6 +127,7 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
         else
             timer.Enabled <- false
             Seq.iter (fun (s:GenericSensor) -> results.Add(s, currentData.[s].ToArray() ) ) sensors
+        experimentRunStopping.Trigger(self)
         let meanAndStdDevReading numSeq = 
             if Seq.isEmpty numSeq then
                 (0.,0.)
@@ -142,7 +142,7 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
                 with
                 | _ -> (0.0,0.0)
         // means and std. dev.
-        sensors |> Seq.iter (fun s -> means.Add(s, meanAndStdDevReading results.[s])) 
+        //sensors |> Seq.iter (fun s -> means.Add(s, meanAndStdDevReading results.[s])) 
         
         let handleSensor (s:GenericSensor) =
                 match s with

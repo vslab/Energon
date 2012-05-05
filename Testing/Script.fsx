@@ -82,6 +82,12 @@ open Energon.Extech380803
 let extechWatt = new Energon.Extech380803.Extech380803Sensor("extechWatt", DataType.Watt, 1.0)
 //let extechPF = new Energon.Extech380803.Extech380803Sensor("extechPF", DataType.PowerFactor, 1.0)
 //let extechV = new Energon.Extech380803.Extech380803Sensor("extechV", DataType.Volt, 1.0)
+extechWatt.Start()
+extechWatt.CurrValue()
+extechWatt.Stop()
+
+let sensors = [| extechWatt :> GenericSensor ; new RemoteSensor("test", DataType.Unknown) :> GenericSensor; new RemoteSensor("test", DataType.Unknown) :> GenericSensor|]
+
 (*
 extechPF.Close()
 extechAmp.Close()
@@ -136,12 +142,14 @@ let sensors = [| compl :> GenericSensor ;
 //let sensors = [|extechAmp :> GenericSensor; extechWatt :> GenericSensor; extechPF :> GenericSensor; extechV :> GenericSensor; r1 :> GenericSensor |]
 //let sensors = [| r1 :> GenericSensor |]
 
+// DEBUG
+let e = new Experiment("TEST", sensors, 0, [| "A" |], [||], fun _ -> ())
+
 // declare an experiment
 let e = new Experiment("saxpy_openCL_3", sensors, 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
 // db helper
 let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
 
-saver.OpenConnection()
 
 // the helper makes easy to handle remote loads and remote sensors
 let helper = new RemoteExperimentHelper(e)
@@ -152,6 +160,83 @@ helper.Stop()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.sdf"
+
+// ------ remote experiment
+
+//let extechAmp = new Energon.Extech380803.Extech380803Sensor("extechAmp", DataType.Ampere, 1.0)
+let extechWatt = new Energon.Extech380803.Extech380803Sensor("extechWatt", DataType.Watt, 1.0)
+//let extechPF = new Energon.Extech380803.Extech380803Sensor("extechPF", DataType.PowerFactor, 1.0)
+//let extechV = new Energon.Extech380803.Extech380803Sensor("extechV", DataType.Volt, 1.0)
+(*
+extechPF.Close()
+extechAmp.Close()
+extechWatt.Close()
+extechV.Close()
+*)
+let name1 = "completionTime"
+let names = [|  "gpuBusy" ; "aluInsts" ; "fetchInsts" ; "wrInsts" ; "waveFronts" ; "AluBusy" ; "aluFetchRatio" ; 
+            "aluPacking" ; "aluPacking" ; "fetchUnitBusy" ; "fetchUnitStalled" ; "fetchSize" ; "cacheHit" ; "writeUnitStalled" ; 
+            "ldsFetchInst" ; "aluStalledByLds" ; "ldsBankConfl" ; "fastPath" ; "completePath" ; "pathUtil" |]
+let allNames = seq{
+    yield name1
+    let n1 = Seq.map (fun (s:string) -> System.String.Format( "{0}_1", s)) names |> Seq.toArray
+    for i in n1 do
+        yield i
+    let n2 = Seq.map (fun (s:string) -> System.String.Format( "{0}_2", s)) names |> Seq.toArray
+    for i in n2 do
+        yield i
+    let n3 = Seq.map (fun (s:string) -> System.String.Format( "{0}_3", s)) names |> Seq.toArray
+    for i in n3 do
+        yield i
+    }
+let sensors = seq {
+        yield extechWatt :> GenericSensor
+        let namesArray = Seq.toArray allNames
+        for n in namesArray do
+            yield new RemoteSensor(n, DataType.Unknown) :> GenericSensor
+    }
+let sensorsList = sensors.ToArray()
+
+// declare an experiment
+let e = new Experiment("saxpy_openCL", sensorsList, 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+// db helper
+let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
+
+// the helper makes easy to handle remote loads and remote sensors
+let helper = new RemoteExperimentHelper(e)
+helper.Start()
+
+
+helper.Stop()
+
+
+
+
+
+
+
+
+
+
+
+
 // a remote process starter (this should be run on the remote machine)
 let remote = new RemoteSensorHelper("127.0.0.1")
 remote.experimentCase([| "2"; "1"; "1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1"; |]) // a new experiment case with its params
@@ -159,6 +244,14 @@ remote.experimentCase([| "2"; "1"; "1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"
 remote.start() // experiment starting
 // experiment run, I have to send remote sensors values, in the same order as we declared the sensors
 remote.stop([| "0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0"; |])  
+
+
+let remote = new RemoteSensorHelper("127.0.0.1")
+remote.experimentCase([| "1" |]) // a new experiment case with its params
+
+remote.start() // experiment starting
+// experiment run, I have to send remote sensors values, in the same order as we declared the sensors
+remote.stop([| "0" ; "1" |])  
 
 
 
@@ -212,8 +305,64 @@ open Energon.SQLCE
 open Energon.CompactSQL
 let db = Energon.CompactSQL.GetLinqContext dbfile
 let exp = db.Experiments
-let expCases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 4 )
 exp.Count()
+let expCases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 2 )
+expCases.Count()
+expCases
+let expRuns (case:Energon.SQLCE.ExperimentCases) =
+    db.ExperimentRuns.Where(fun (x:Energon.SQLCE.ExperimentRuns) -> x.Experiment_case_id = case.Id)
+let handleRun (x:Energon.SQLCE.ExperimentRuns) =
+    let sensors = db.Sensors.Where(fun (s:Energon.SQLCE.Sensors) -> s.Experiment_run_id = x.Id).OrderBy(fun (s:Energon.SQLCE.Sensors) -> s.Sensor_class_id) |> Seq.toArray
+    let getSensorClass (s:Energon.SQLCE.Sensors) =
+        db.SensorClasses.First(fun (c:Energon.SQLCE.SensorClasses) -> c.Id = s.Sensor_class_id)
+    let getReadings (s:Energon.SQLCE.Sensors) =
+        let measures = db.Measurements1.Where(fun (m:Energon.SQLCE.Measurements1) -> m.Sensor_id = s.Id )
+        measures |> Seq.map (fun (m:Energon.SQLCE.Measurements1) -> m.Value) |> Seq.average
+    let vals =
+        Seq.map getReadings sensors
+    (sensors.ToArray(), vals)
+let handleCase (case:Energon.SQLCE.ExperimentCases) =
+    let run = (expRuns case).First()
+    let s,v = handleRun run
+    v.ToArray()
+
+let casesSubset = expCases.Where(fun (e:Energon.SQLCE.ExperimentCases) -> e.Id = 31)
+let casesSubset = expCases
+casesSubset
+expRuns (casesSubset.First())
+let data cases =
+    cases |> Seq.map (fun (c:Energon.SQLCE.ExperimentCases) -> (handleCase c))
+handleCase (casesSubset.First())
+data casesSubset
+let a,b = handleRun ((expRuns (casesSubset.First())).First())
+a
+b
+
+db.Measurements1.Where(fun (m:Energon.SQLCE.Measurements1) -> m.Sensor_id = 29405)
+let sensors = db.Sensors.Where(fun (s:Energon.SQLCE.Sensors) -> s.Experiment_run_id = 31)
+sensors.Count()
+let sensorsArray = sensors.ToArray()
+sensorsArray.[0]
+
+db.SensorClasses.Where(fun (c:Energon.SQLCE.SensorClasses) -> c.Id = sensorsArray.[0].Sensor_class_id)
+db.Measurements1.Where(fun (m:Energon.SQLCE.Measurements1) -> m.Sensor_id = sensorsArray.[0].Id)
+
+
+for i in 0..61 do
+    let c = db.Measurements1.Where(fun (m:Energon.SQLCE.Measurements1) -> m.Sensor_id = sensorsArray.[i].Id).Count()
+    printf "%i " c
+
+for i in 0..61 do
+    let c = db.Measurements1.Where(fun (m:Energon.SQLCE.Measurements1) -> m.Sensor_id = sensorsArray.[i].Id).First()
+    printf "%f " c.Value
+
+db.Sensors
+
+let meas = db.Measurements1.Where(fun _ -> true)
+let measArray = meas.ToArray()
+measArray.Count()
+measArray.[319]
+
 let lastExpCase = expCases.Where(fun (x:ExperimentCases) -> x.Id = 3 ).First()
 let runs = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Experiment_case_id = lastExpCase.Id )
 runs

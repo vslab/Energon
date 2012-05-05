@@ -36,56 +36,31 @@ let main args =
     extechWatt.Close()
     extechV.Close()
     *)
-    // declare a remote sensor
-    let compl = new RemoteSensor("completionTime", DataType.Unknown)
-    let gpubusy = new RemoteSensor("gpuBusy", DataType.Unknown)
-    let aluInsts = new RemoteSensor("aluInsts", DataType.Unknown)
-    let fetchInsts = new RemoteSensor("fetchInsts", DataType.Unknown)
-    let wrInsts = new RemoteSensor("wrInsts", DataType.Unknown)
-    let waveFronts = new RemoteSensor("waveFronts", DataType.Unknown)
-    let AluBusy = new RemoteSensor("AluBusy", DataType.Unknown)
-    let aluFetchRatio = new RemoteSensor("aluFetchRatio", DataType.Unknown)
-    let aluPacking = new RemoteSensor("aluPacking", DataType.Unknown)
-    let fetchUnitBusy = new RemoteSensor("fetchUnitBusy", DataType.Unknown)
-    let fetchUnitStalled = new RemoteSensor("fetchUnitStalled", DataType.Unknown)
-    let fetchSize = new RemoteSensor("fetchSize", DataType.Unknown)
-    let cacheHit = new RemoteSensor("cacheHit", DataType.Unknown)
-    let writeUnitStalled = new RemoteSensor("writeUnitStalled", DataType.Unknown)
-    let ldsFetchInst = new RemoteSensor("ldsFetchInst", DataType.Unknown)
-    let ldsWrInsts = new RemoteSensor("ldsWrInsts", DataType.Unknown)
-    let aluStalledByLds = new RemoteSensor("aluStalledByLds", DataType.Unknown)
-    let ldsBankConfl = new RemoteSensor("ldsBankConfl", DataType.Unknown)
-    let fastPath = new RemoteSensor("fastPath", DataType.Unknown)
-    let completePath = new RemoteSensor("completePath", DataType.Unknown)
-    let pathUtil = new RemoteSensor("pathUtil", DataType.Unknown)
-
-    let sensors = [| compl :> GenericSensor ; 
-                     gpubusy :> GenericSensor ;
-                     aluInsts :> GenericSensor ;
-                     fetchInsts :> GenericSensor ;
-                     wrInsts :> GenericSensor ;
-                     waveFronts :> GenericSensor ;
-                     AluBusy :> GenericSensor ;
-                     aluFetchRatio :> GenericSensor ;
-                     aluPacking :> GenericSensor ;
-                     fetchUnitBusy :> GenericSensor ;
-                     fetchUnitStalled :> GenericSensor ;
-                     fetchSize :> GenericSensor ;
-                     cacheHit :> GenericSensor ;
-                     writeUnitStalled :> GenericSensor ;
-                     ldsFetchInst :> GenericSensor ;
-                     ldsWrInsts :> GenericSensor ;
-                     aluStalledByLds :> GenericSensor ;
-                     ldsBankConfl :> GenericSensor ;
-                     fastPath :> GenericSensor ;
-                     completePath :> GenericSensor ;
-                     pathUtil :> GenericSensor ;
-                    extechWatt :> GenericSensor |]
-    //let sensors = [|extechAmp :> GenericSensor; extechWatt :> GenericSensor; extechPF :> GenericSensor; extechV :> GenericSensor; r1 :> GenericSensor |]
-    //let sensors = [| r1 :> GenericSensor |]
+    let name1 = "completionTime"
+    let names = [|  "gpuBusy" ; "aluInsts" ; "fetchInsts" ; "wrInsts" ; "waveFronts" ; "AluBusy" ; "aluFetchRatio" ; 
+                "aluPacking" ; "aluPacking" ; "fetchUnitBusy" ; "fetchUnitStalled" ; "fetchSize" ; "cacheHit" ; "writeUnitStalled" ; 
+                "ldsFetchInst" ; "aluStalledByLds" ; "ldsBankConfl" ; "fastPath" ; "completePath" ; "pathUtil" |]
+    let allNames = seq{
+        yield name1
+        let n1 = Seq.map (fun (s:string) -> System.String.Format( "{0}_1", s)) names |> Seq.toArray
+        for i in n1 do
+            yield i
+        let n2 = Seq.map (fun (s:string) -> System.String.Format( "{0}_2", s)) names |> Seq.toArray
+        for i in n2 do
+            yield i
+        let n3 = Seq.map (fun (s:string) -> System.String.Format( "{0}_3", s)) names |> Seq.toArray
+        for i in n3 do
+            yield i
+        }
+    let sensors = seq {
+            yield extechWatt :> GenericSensor
+            let namesArray = Seq.toArray allNames
+            for n in namesArray do
+                yield new RemoteSensor(n, DataType.Unknown) :> GenericSensor
+        }
 
     // declare an experiment
-    let e = new Experiment("saxpy_openCL", sensors, 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+    let e = new Experiment("saxpy_openCL", (Seq.toArray sensors), 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
     // db helper
     let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
 

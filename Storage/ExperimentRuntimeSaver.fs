@@ -15,6 +15,9 @@ open System.Collections.Generic
 
 type ExperimentRuntimeSaver(exp:Experiment, file) =
     let l = ref 0 
+    let mutable currExpId = 0
+    let mutable currExpCaseId = 0
+    let mutable currExpRunId = 0
     let getConStr file = 
         let conStr = "Data Source=" + file + ";" in
         conStr;
@@ -109,6 +112,7 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
             //let t = db.Connection.BeginTransaction()
             //db.Transaction <- t
             db.Sensors.InsertOnSubmit(sensor)
+            db.SubmitChanges(ConflictMode.ContinueOnConflict)
             //t.Commit()
             s.ID <- sensor.Id
         c.Sensors |> Seq.iter handleSensor
