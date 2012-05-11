@@ -37,6 +37,7 @@
   <ItemGroup>
     <Compile Include="File1.fs" />
     <None Include="Script.fsx" />
+    <None Include="Analysis.fsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Extech\Extech.fsproj">

@@ -74,7 +74,7 @@ open System.Data.DataSetExtensions
 //CompactSQL
 //Energon.CompactSQL.SaveExperiment e dbfile
 
-let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.sdf"
+let dbfile = @"C:\Users\root\Desktop\Energon\Reduce.sdf"
 
 // example getting data from db
 open Energon.SQLCE
@@ -82,8 +82,10 @@ open Energon.CompactSQL
 let db = Energon.CompactSQL.GetLinqContext dbfile
 let exp = db.Experiments
 exp.Count()
+
 let expCases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 1 )
 expCases.Count()
+
 expCases
 let arg1 (case:ExperimentCases) =
     let tags = case.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
@@ -109,10 +111,10 @@ let handleCase (case:Energon.SQLCE.ExperimentCases) =
     let s,v = handleRun run
     let args = case.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
     let firstArg = match args.[0] with
-        | "HOST_SEQ" -> 0.
-        | "HOST_PAR" -> 1.
-        | "OPENCL" -> 2.
-        | _ -> -1.
+                    | "HOST_SEQ" -> 0.
+                    | "HOST_PAR" -> 1.
+                    | "OPENCL" -> 2.
+                    | _ -> -1.
     let argsToFloatSeq = seq {
             yield firstArg
             let argN = args.Length - 1
@@ -121,32 +123,52 @@ let handleCase (case:Energon.SQLCE.ExperimentCases) =
         }
     let argArray = argsToFloatSeq.ToArray()
     let valArray = v.ToArray()
-    Array.concat [| argArray; valArray |]
+    let j = valArray.[0] * valArray.[1]
+    Array.concat [| argArray; valArray; [| j |] |]
+
+let casesSubset = expCases.Take 11
 
 let casesSubset = expCases.Where(fun (e:Energon.SQLCE.ExperimentCases) -> 
-    let firstArg = match e.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries).[0] with
-        | "HOST_SEQ" -> 0.
-        | "HOST_PAR" -> 1.
-        | "OPENCL" -> 2.
-        | _ -> -1.
-    firstArg = 0. )
+    let args = e.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
+    let firstArg = match args.[0] with
+                    | "HOST_SEQ" -> 0.
+                    | "HOST_PAR" -> 1.
+                    | "OPENCL" -> 2.
+                    | _ -> -1.
+    let ndev = args.[5]
+    let validDev = 
+        match args.[6], args.[9], args.[12] with
+        | "0", "1", "2" -> 
+    ndev = "1" && firstArg = 1. )
+
 //let casesSubset = expCases
 casesSubset.Count()
 expRuns (casesSubset.First())
+
 let data cases =
     cases |> Seq.map (fun (c:Energon.SQLCE.ExperimentCases) -> (handleCase c))
-handleCase (casesSubset.First())
+let vtest = handleCase (casesSubset.First())
+vtest.Count()
 let valuesMatrix = data casesSubset
 
 let colNames (e:Energon.SQLCE.Experiments) (c:Energon.SQLCE.ExperimentCases) (r:Energon.SQLCE.ExperimentRuns)=
     let args = e.ArgNames.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
     let sensors = db.Sensors.Where(fun (s:Energon.SQLCE.Sensors) -> s.Experiment_run_id = r.Id)
-    let sensorName (s:Energon.SQLCE.Sensors) =
+    let sensorName (s:Energon.SQLCE.Sensors) = 
         db.SensorClasses.Where(fun (cl:Energon.SQLCE.SensorClasses) -> cl.Id = s.Sensor_class_id).First().SensorName
     let sensorsNames = (Seq.map sensorName sensors).ToArray()
-    Array.concat [| args ; sensorsNames |]
+    Array.concat [| args ; sensorsNames ; [|"J"|] |]
 
 let names = colNames (exp.First()) (expCases.First()) (Seq.head (expRuns (casesSubset.First())))
+
+let colIdx name = 
+    let mutable res = -1
+    for i in 0..(names.Length) do
+        if name = names.[i] then
+            res <- i
+    res
+
+let colName idx = names.[idx]
 
 let sb = new System.Text.StringBuilder()
 names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
@@ -162,14 +184,15 @@ sb.ToString()
 
 System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\DB03.csv", sb.ToString())
 
+let vals = valuesMatrix.ToArray()
+vals.[0].Count()
+names.Count()
+let corrMatr = getCorrMatrix vals
 
-
-let corrMatr = getCorrMatrix valuesMatrix
-
-let cols = 77
+let cols = 78
 let row = 1
-for row in 0..76 do
-    for i in row..76 do
+for row in 0..(cols-1) do
+    for i in row..(cols-1) do
         let value = corrMatr.[row,i]
         if not (row = i) then
             if not (Double.IsNaN(value) ) then
@@ -177,4 +200,8 @@ for row in 0..76 do
                     printf "%s,%s:%f " (names.[row]) (names.[i]) corrMatr.[row,i]
                 if value < -0.4 then
                     printf "%s,%s:%f " (names.[row]) (names.[i]) corrMatr.[row,i]
+
+
+
+
 
