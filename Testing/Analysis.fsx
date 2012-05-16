@@ -74,7 +74,7 @@ open System.Data.DataSetExtensions
 //CompactSQL
 //Energon.CompactSQL.SaveExperiment e dbfile
 
-let dbfile = @"C:\Users\root\Desktop\Energon\Reduce.sdf"
+let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.sdf"
 
 // example getting data from db
 open Energon.SQLCE
@@ -82,11 +82,17 @@ open Energon.CompactSQL
 let db = Energon.CompactSQL.GetLinqContext dbfile
 let exp = db.Experiments
 exp.Count()
+exp.ToArray()
 
-let expCases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 1 )
+
+
+let expCasesReduce = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 1 )
+let expCasesSaxpy = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 7 )
+
+let expCases = expCasesReduce
+
 expCases.Count()
 
-expCases
 let arg1 (case:ExperimentCases) =
     let tags = case.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
     tags.[0]
@@ -163,26 +169,13 @@ let names = colNames (exp.First()) (expCases.First()) (Seq.head (expRuns (casesS
 
 let colIdx name = 
     let mutable res = -1
-    for i in 0..(names.Length) do
+    let namesL = names.Length - 1 
+    for i in 0..namesL do
         if name = names.[i] then
             res <- i
     res
 
 let colName idx = names.[idx]
-
-let sb = new System.Text.StringBuilder()
-names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
-sb.AppendLine("")
-
-valuesMatrix |> Seq.iter (fun (vals:float[]) ->
-    for f in vals do
-        sb.AppendFormat(@"{0};", f) |> ignore
-    sb.AppendLine("") |> ignore
-    )
-
-sb.ToString()
-
-System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\DB03.csv", sb.ToString())
 
 let vals = valuesMatrix.ToArray()
 vals.[0].Count()
@@ -201,7 +194,51 @@ for row in 0..(cols-1) do
                 if value < -0.4 then
                     printf "%s,%s:%f " (names.[row]) (names.[i]) corrMatr.[row,i]
 
+let j_index = colIdx "J"
+let w_index = colIdx "extechWatt" 
+let t_index = colIdx "completionTime" 
+
+let buildLabel primo idxsecondo =
+    System.String.Format("{0},{1}", primo, (colName idxsecondo))
+
+let correlationsLabels = seq {
+        let maxCols = cols - 1
+        for i in 0..maxCols do
+            yield buildLabel "J" i
+        for i in 0..maxCols do
+            yield buildLabel "extechWatt" i
+        for i in 0..maxCols do
+            yield buildLabel "completionTime" i
+    }
+
+let correlationsVals (corrMatrix:float[,]) = seq {
+        let maxCols = cols - 1
+        for i in 0..maxCols do
+            yield corrMatrix.[j_index,i]
+        for i in 0..maxCols do
+            yield corrMatrix.[w_index,i]
+        for i in 0..maxCols do
+            yield corrMatrix.[t_index,i]
+    }
 
 
+let sb = new System.Text.StringBuilder()
+names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
+sb.AppendLine("")
+
+valuesMatrix |> Seq.iter (fun (vals:float[]) ->
+    for f in vals do
+        sb.AppendFormat(@"{0};", f) |> ignore
+    sb.AppendLine("") |> ignore
+    )
+
+valuesMatrix |> Seq.iter (fun (vals:float[]) ->
+    for f in vals do
+        sb.AppendFormat(@"{0};", f) |> ignore
+    sb.AppendLine("") |> ignore
+    )
 
 
+sb.ToString()
+
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\DB03.csv", sb.ToString())

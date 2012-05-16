@@ -76,7 +76,7 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         //let t = db.Connection.BeginTransaction()
         //db.Transaction <- t
         db.Experiments.InsertOnSubmit(experiment)
-        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        db.SubmitChanges(ConflictMode.ContinueOnConflict)%
         //t.Commit()
         exp.ID <- experiment.Id
 
