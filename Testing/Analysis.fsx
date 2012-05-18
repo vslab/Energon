@@ -91,13 +91,9 @@ let expCasesSaxpy = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experi
 
 let expCases = expCasesReduce
 
-expCases.Count()
-
 let arg1 (case:ExperimentCases) =
     let tags = case.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
     tags.[0]
-for c in expCases do
-    printf "%s\n" (arg1 c)
 
 let expRuns (case:Energon.SQLCE.ExperimentCases) =
     db.ExperimentRuns.Where(fun (x:Energon.SQLCE.ExperimentRuns) -> x.Experiment_case_id = case.Id)
@@ -132,30 +128,10 @@ let handleCase (case:Energon.SQLCE.ExperimentCases) =
     let j = valArray.[0] * valArray.[1]
     Array.concat [| argArray; valArray; [| j |] |]
 
-let casesSubset = expCases.Take 11
-
-let casesSubset = expCases.Where(fun (e:Energon.SQLCE.ExperimentCases) -> 
-    let args = e.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
-    let firstArg = match args.[0] with
-                    | "HOST_SEQ" -> 0.
-                    | "HOST_PAR" -> 1.
-                    | "OPENCL" -> 2.
-                    | _ -> -1.
-    let ndev = args.[5]
-    let validDev = 
-        match args.[6], args.[9], args.[12] with
-        | "0", "1", "2" -> 
-    ndev = "1" && firstArg = 1. )
-
-//let casesSubset = expCases
-casesSubset.Count()
-expRuns (casesSubset.First())
-
 let data cases =
     cases |> Seq.map (fun (c:Energon.SQLCE.ExperimentCases) -> (handleCase c))
-let vtest = handleCase (casesSubset.First())
-vtest.Count()
-let valuesMatrix = data casesSubset
+
+let cols = 78
 
 let colNames (e:Energon.SQLCE.Experiments) (c:Energon.SQLCE.ExperimentCases) (r:Energon.SQLCE.ExperimentRuns)=
     let args = e.ArgNames.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
@@ -165,7 +141,7 @@ let colNames (e:Energon.SQLCE.Experiments) (c:Energon.SQLCE.ExperimentCases) (r:
     let sensorsNames = (Seq.map sensorName sensors).ToArray()
     Array.concat [| args ; sensorsNames ; [|"J"|] |]
 
-let names = colNames (exp.First()) (expCases.First()) (Seq.head (expRuns (casesSubset.First())))
+let names = colNames (exp.First()) (expCases.First()) (Seq.head (expRuns (expCases.First())))
 
 let colIdx name = 
     let mutable res = -1
@@ -177,68 +153,74 @@ let colIdx name =
 
 let colName idx = names.[idx]
 
-let vals = valuesMatrix.ToArray()
-vals.[0].Count()
-names.Count()
-let corrMatr = getCorrMatrix vals
-
-let cols = 78
-let row = 1
-for row in 0..(cols-1) do
-    for i in row..(cols-1) do
-        let value = corrMatr.[row,i]
-        if not (row = i) then
-            if not (Double.IsNaN(value) ) then
-                if value > 0.4 then
-                    printf "%s,%s:%f " (names.[row]) (names.[i]) corrMatr.[row,i]
-                if value < -0.4 then
-                    printf "%s,%s:%f " (names.[row]) (names.[i]) corrMatr.[row,i]
-
-let j_index = colIdx "J"
-let w_index = colIdx "extechWatt" 
-let t_index = colIdx "completionTime" 
-
 let buildLabel primo idxsecondo =
     System.String.Format("{0},{1}", primo, (colName idxsecondo))
 
 let correlationsLabels = seq {
-        let maxCols = cols - 1
-        for i in 0..maxCols do
-            yield buildLabel "J" i
-        for i in 0..maxCols do
-            yield buildLabel "extechWatt" i
-        for i in 0..maxCols do
-            yield buildLabel "completionTime" i
-    }
+    let maxCols = cols - 1
+    for i in 0..maxCols do
+        yield buildLabel "J" i
+    for i in 0..maxCols do
+        yield buildLabel "extechWatt" i
+    for i in 0..maxCols do
+        yield buildLabel "completionTime" i
+}
 
-let correlationsVals (corrMatrix:float[,]) = seq {
-        let maxCols = cols - 1
-        for i in 0..maxCols do
-            yield corrMatrix.[j_index,i]
-        for i in 0..maxCols do
-            yield corrMatrix.[w_index,i]
-        for i in 0..maxCols do
-            yield corrMatrix.[t_index,i]
-    }
-
+let extendedColNames =
+    Array.concat [| names ; correlationsLabels.ToArray() |]
 
 let sb = new System.Text.StringBuilder()
-names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
+//names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
+correlationsLabels |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
 sb.AppendLine("")
 
-valuesMatrix |> Seq.iter (fun (vals:float[]) ->
-    for f in vals do
-        sb.AppendFormat(@"{0};", f) |> ignore
-    sb.AppendLine("") |> ignore
-    )
+let sb2 = new System.Text.StringBuilder()
 
-valuesMatrix |> Seq.iter (fun (vals:float[]) ->
-    for f in vals do
-        sb.AppendFormat(@"{0};", f) |> ignore
+
+//for round in 0..22 do    
+for round in 0..2 do    
+    let casesSubset = expCases.Skip round |> Seq.take 11
+    let valuesMatrix = data casesSubset
+    let vals = valuesMatrix.ToArray()
+    let corrMatr = getCorrMatrix vals
+    let j_index = colIdx "J"
+    let w_index = colIdx "extechWatt" 
+    let t_index = colIdx "completionTime" 
+
+    let correlationsVals (corrMatrix:float[,]) = seq {
+            let maxCols = cols - 1
+            for i in 0..maxCols do
+                yield corrMatrix.[j_index,i]
+            for i in 0..maxCols do
+                yield corrMatrix.[w_index,i]
+            for i in 0..maxCols do
+                yield corrMatrix.[t_index,i]
+        }
+    sb.Append(casesSubset.First().Args.Replace(";", " ")) |> ignore
+    correlationsVals corrMatr |> Seq.iter (fun f -> sb.AppendFormat(@"{0};", f) |> ignore)
     sb.AppendLine("") |> ignore
-    )
+
+    for row in 0..(cols-1) do
+        for i in row..(cols-1) do
+            let value = corrMatr.[row,i]
+            if not (row = i) then
+                if not (Double.IsNaN(value) ) then
+                    if value > 0.4 then
+                        sb2.AppendFormat("{0},{1}:{2};", (names.[row]), (names.[i]), corrMatr.[row,i]) |> ignore
+                    if value < -0.4 then
+                        sb2.AppendFormat("{0},{1}:{2};", (names.[row]), (names.[i]), corrMatr.[row,i]) |> ignore
+    sb2.AppendLine("") |> ignore
+
+
+1+1
+
+
 
 
 sb.ToString()
+sb2.ToString()
 
-System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\DB03.csv", sb.ToString())
+
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_correlations.csv", sb.ToString())
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_correlations_text.csv", sb2.ToString())
+
