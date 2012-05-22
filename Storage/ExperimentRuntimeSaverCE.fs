@@ -13,7 +13,7 @@ open Energon.SQLCE
 open System.Collections.Generic
 
 
-type ExperimentRuntimeSaver(exp:Experiment, file) =
+type ExperimentRuntimeSaverCE(exp:Experiment, file) =
     let l = ref 0 
     let mutable currExpId = 0
     let mutable currExpCaseId = 0

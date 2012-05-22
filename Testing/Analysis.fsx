@@ -83,13 +83,14 @@ let db = Energon.CompactSQL.GetLinqContext dbfile
 let exp = db.Experiments
 exp.Count()
 exp.ToArray()
-
+exp
 
 
 let expCasesReduce = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 1 )
 let expCasesSaxpy = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 7 )
 
 let expCases = expCasesReduce
+let expCases = expCasesSaxpy
 
 let arg1 (case:ExperimentCases) =
     let tags = case.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
@@ -223,4 +224,29 @@ sb2.ToString()
 
 System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_correlations.csv", sb.ToString())
 System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_correlations_text.csv", sb2.ToString())
+
+
+
+
+// print values
+
+//let casesSubset = expCases.Skip 0 |> Seq.take 1
+let casesSubset = expCases
+
+let valuesMatrix = data casesSubset
+
+let sb3 = new System.Text.StringBuilder()
+names |> Seq.iter (fun (s:string) -> sb3.AppendFormat(@"{0};", s) |> ignore)
+sb3.AppendLine("")
+
+valuesMatrix |> Seq.iter (fun (vals:float[]) ->
+    for f in vals do
+        sb3.AppendFormat(@"{0};", f) |> ignore
+    sb3.AppendLine("") |> ignore
+    )
+
+sb3.ToString()
+
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce.csv", sb3.ToString())
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\saxpy.csv", sb3.ToString())
 

@@ -50,6 +50,8 @@ e.Results
 
 #r "Energon.SQLCE.dll"
 
+#r "SQLExpress.dll"
+
 #r "System.Data.Linq.dll"
 #r "System.Linq.dll"
 
@@ -65,7 +67,9 @@ open System.Data.Linq.SqlClient
 open System.Linq
 open Microsoft.FSharp.Linq
 open System.Data.Linq
+
 open System.Data.SqlServerCe;
+
 open Energon.Measuring
 open System.Text
 open System.Data.DataSetExtensions
@@ -148,7 +152,7 @@ let e = new Experiment("TEST", sensors, 0, [| "A" |], [||], fun _ -> ())
 // declare an experiment
 let e = new Experiment("saxpy_openCL_3", sensors, 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
 // db helper
-let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
+let saver = new Energon.Storage.ExperimentRuntimeSaverExpress(e, "HPLAB\SQLEXPRESS", "Measure" )
 
 
 // the helper makes easy to handle remote loads and remote sensors
