@@ -1,4 +1,5 @@
 ﻿#I @"C:\Users\root\Desktop\Energon\bin\Debug"
+#I @"C:\progetti\Energon\bin\Debug"
 #r @"Energon.Measuring.dll"
 open Energon.Measuring
 
@@ -309,6 +310,12 @@ let dbfile = @"C:\Users\root\Desktop\Energon\Measures\DB02.sdf"
 let dbfile = @"C:\Users\root\Desktop\Energon\Measures\DB03.sdf"
 let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.sdf"
 
+let dbfile = @"C:\progetti\Energon\Measures\DB01.sdf"
+let dbfile = @"C:\progetti\Energon\Measures\DB02.sdf"
+let dbfile = @"C:\progetti\Energon\Measures\DB03.sdf"
+let dbfile = @"C:\progetti\Energon\Measures\DB04.sdf"
+let dbfile = @"C:\progetti\Energon\Measures\Measurements.sdf"
+
 // example getting data from db
 open Energon.SQLCE
 open Energon.CompactSQL
@@ -358,11 +365,17 @@ let handleCase (case:Energon.SQLCE.ExperimentCases) =
 
 let casesSubset = expCases.Where(fun (e:Energon.SQLCE.ExperimentCases) -> 
     let firstArg = match e.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries).[0] with
-        | "HOST_SEQ" -> 0.
-        | "HOST_PAR" -> 1.
-        | "OPENCL" -> 2.
-        | _ -> -1.
-    firstArg = 0. )
+                    | "HOST_SEQ" -> 0.
+                    | "HOST_PAR" -> 1.
+                    | "OPENCL" -> 2.
+                    | _ -> -1.
+    let sixthArg = match e.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries).[5] with
+                    | "0" -> 0.
+                    | "1" -> 1.
+                    | "2" -> 1.
+                    | "3" -> 1.
+                    | _ -> -1.
+    firstArg = 2. && sixthArg = 1. ) |> Seq.skip 11 |> Seq.take 11
 let casesSubset = expCases
 casesSubset.Count()
 expRuns (casesSubset.First())
@@ -393,7 +406,8 @@ valuesMatrix |> Seq.iter (fun (vals:float[]) ->
 
 sb.ToString()
 
-System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\DB03.csv", sb.ToString())
+System.IO.File.WriteAllText(@"C:\progetti\Energon\Measures\DB04.csv", sb.ToString())
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\DB04.csv", sb.ToString())
 
 
 
