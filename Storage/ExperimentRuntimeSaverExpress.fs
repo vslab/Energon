@@ -129,19 +129,22 @@ type ExperimentRuntimeSaverExpress(exp:Experiment, server:string, database:strin
     let readingsList = new List<Experiment*ExperimentCase*ExperimentRun*GenericSensor*Reading>()
 
     let saveReading (run:ExperimentRun) (sensor:GenericSensor) (reading:Reading) =
-        let r = new SQLExpress.Measurements()
-        r.Timestamp <- reading.Timestamp
-        r.Sensor_id <- sensor.ID
-        r.Value <- reading.Value
-        // TODO: RAW
-        //let t = db.Connection.BeginTransaction()
-        //db.Transaction <- t
-        try
-            db.Measurements.InsertOnSubmit(r)
-            db.SubmitChanges(ConflictMode.ContinueOnConflict)
-        with
-        | _ -> printf "exception saving measure\n"
-        //t.Commit()
+        if (Double.IsNaN(reading.Value)) then
+            printf "NaN\n"
+        else
+            let r = new SQLExpress.Measurements()
+            r.Timestamp <- reading.Timestamp
+            r.Sensor_id <- sensor.ID
+            r.Value <- reading.Value
+            // TODO: RAW
+            //let t = db.Connection.BeginTransaction()
+            //db.Transaction <- t
+            try
+                db.Measurements.InsertOnSubmit(r)
+                db.SubmitChanges(ConflictMode.ContinueOnConflict)
+            with
+            | _ -> printf "exception saving measure\n"
+            //t.Commit()
 
     let experimentRunStopping (r:ExperimentRun) =
         let run = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Id = r.ID).First()

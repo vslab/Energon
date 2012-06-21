@@ -2,8 +2,6 @@
 #r @"Energon.Measuring.dll"
 open Energon.Measuring
 
-
-
 let getCorrMatrix data =
     let getMatrixInfo nCol (count,crossProd:float array array,sumVector:float array,sqVector:float array) (newLine:float array)   = 
         for i in 0..(nCol-1) do
@@ -42,7 +40,6 @@ let getCorrMatrix data =
     corrMatrix
 
 
-
 // ****************** SqlCE ***************************
 #r @"Energon.Storage.dll"
 
@@ -58,6 +55,7 @@ let getCorrMatrix data =
 
 #r "System.Data.DataSetExtensions.dll"
 #r "System.Core.dll"
+#r "SQLExpress.dll"
 
 open System
 open Microsoft.FSharp.Data.TypeProviders
@@ -65,16 +63,20 @@ open System.Data.Linq.SqlClient
 open System.Linq
 open Microsoft.FSharp.Linq
 open System.Data.Linq
-open System.Data.SqlServerCe;
+
 open Energon.Measuring
 open System.Text
 open System.Data.DataSetExtensions
+
+open System.Data.SqlServerCe;
 
 
 //CompactSQL
 //Energon.CompactSQL.SaveExperiment e dbfile
 
-let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.sdf"
+let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.old.sdf"
+let dbfile = @"C:\Users\root\Desktop\Energon\Measures\Reduce.old.sdf"
+
 
 // example getting data from db
 open Energon.SQLCE
@@ -83,33 +85,86 @@ let db = Energon.CompactSQL.GetLinqContext dbfile
 let exp = db.Experiments
 exp.Count()
 exp.ToArray()
-exp
+exp.Where(fun (x:Energon.SQLCE.Experiments) -> x.Id = 7)
 
 
-let expCasesReduce = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 1 )
+open SQLExpress
+
+let server = "HPLAB\SQLEXPRESS"
+let database = "Measure"
+
+let getConStr = 
+    //let conStr = System.String.Format("server='{0}';database='{1}';User Id='{2}';password='{3}';", server, database, user, password) in
+    let conStr = System.String.Format("Data Source={0};Initial Catalog={1};Integrated Security=SSPI;", server, database) in
+    conStr;
+
+let GetLinqContext = 
+    let context = new SQLExpress.Measure(getConStr)
+    if (context.DatabaseExists() = false) then
+            context.CreateDatabase()
+    context
+
+let db = GetLinqContext
+let exps = db.Experiments
+exps.ToArray()
+let exp = db.Experiments.Where(fun (x:Experiments) -> x.Id = 4)
+let expCasesConvolution = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 4 )
+let expCasesConvolutionDGPU = db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
+    if x.Experiment_id = 4 then
+        let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
+        let mode = args.[0]
+        let ndev = args.[6]
+        let dev = args.[7]
+        if mode = "1" && ndev = "1" && dev = "0" then
+            true
+        else
+            false
+    else
+        false    
+    )
+let expCasesConvolutionIGX = db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
+    if x.Experiment_id = 4 then
+        let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
+        let mode = args.[0]
+        let ndev = args.[6]
+        let dev = args.[7]
+        if mode = "1" && ndev = "1" && dev = "1" then
+            true
+        else
+            false
+    else
+        false
+    )
+
+let expCasesReduce = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 11 )
 let expCasesSaxpy = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 7 )
 
+
 let expCases = expCasesReduce
-let expCases = expCasesSaxpy
+//let expCases = expCasesSaxpy
+//let expCases = expCasesConvolution
 
 let arg1 (case:ExperimentCases) =
     let tags = case.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
     tags.[0]
 
-let expRuns (case:Energon.SQLCE.ExperimentCases) =
-    db.ExperimentRuns.Where(fun (x:Energon.SQLCE.ExperimentRuns) -> x.Experiment_case_id = case.Id)
-let handleRun (x:Energon.SQLCE.ExperimentRuns) =
-    let sensors = db.Sensors.Where(fun (s:Energon.SQLCE.Sensors) -> s.Experiment_run_id = x.Id).OrderBy(fun (s:Energon.SQLCE.Sensors) -> s.Sensor_class_id) |> Seq.toArray
-    let getSensorClass (s:Energon.SQLCE.Sensors) =
-        db.SensorClasses.First(fun (c:Energon.SQLCE.SensorClasses) -> c.Id = s.Sensor_class_id)
-    let getReadings (s:Energon.SQLCE.Sensors) =
-        let measures = db.Measurements1.Where(fun (m:Energon.SQLCE.Measurements1) -> m.Sensor_id = s.Id )
-        measures |> Seq.map (fun (m:Energon.SQLCE.Measurements1) -> m.Value) |> Seq.average
+let expRuns (case:ExperimentCases) =
+    db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Experiment_case_id = case.Id)
+
+let handleRun (x:ExperimentRuns) =
+    let sensors = db.Sensors.Where(fun (s:Sensors) -> s.Experiment_run_id = x.Id).OrderBy(fun (s:Sensors) -> s.Sensor_class_id) |> Seq.toArray
+    let getSensorClass (s:Sensors) =
+        db.SensorClasses.First(fun (c:SensorClasses) -> c.Id = s.Sensor_class_id)
+    let getReadings (s:Sensors) =
+        //let measures = db.Measurements1.Where(fun (m:Measurements1) -> m.Sensor_id = s.Id )
+        //measures |> Seq.map (fun (m:Measurements1) -> m.Value) |> Seq.average
+        let measures = db.Measurements.Where(fun (m:Measurements) -> m.Sensor_id = s.Id )
+        measures |> Seq.map (fun (m:Measurements) -> m.Value) |> Seq.average
     let vals =
         Seq.map getReadings sensors
     (sensors.ToArray(), vals)
 
-let handleCase (case:Energon.SQLCE.ExperimentCases) =
+let handleCase (case:ExperimentCases) =
     let run = (expRuns case).First()
     let s,v = handleRun run
     let args = case.Args.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
@@ -127,22 +182,25 @@ let handleCase (case:Energon.SQLCE.ExperimentCases) =
     let argArray = argsToFloatSeq.ToArray()
     let valArray = v.ToArray()
     let j = valArray.[0] * valArray.[1]
-    Array.concat [| argArray; valArray; [| j |] |]
+    let mat_size = argArray.[1] * argArray.[2]
+    Array.concat [| argArray; valArray; [| j ; mat_size |] |]
 
 let data cases =
-    cases |> Seq.map (fun (c:Energon.SQLCE.ExperimentCases) -> (handleCase c))
+    cases |> Seq.map (fun (c:ExperimentCases) -> (handleCase c))
 
-let cols = 78
+let cols = 80
 
-let colNames (e:Energon.SQLCE.Experiments) (c:Energon.SQLCE.ExperimentCases) (r:Energon.SQLCE.ExperimentRuns)=
+let colNames (e:Experiments) (c:ExperimentCases) (r:ExperimentRuns)=
     let args = e.ArgNames.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
-    let sensors = db.Sensors.Where(fun (s:Energon.SQLCE.Sensors) -> s.Experiment_run_id = r.Id)
-    let sensorName (s:Energon.SQLCE.Sensors) = 
-        db.SensorClasses.Where(fun (cl:Energon.SQLCE.SensorClasses) -> cl.Id = s.Sensor_class_id).First().SensorName
+    let sensors = db.Sensors.Where(fun (s:Sensors) -> s.Experiment_run_id = r.Id)
+    let sensorName (s:Sensors) = 
+        db.SensorClasses.Where(fun (cl:SensorClasses) -> cl.Id = s.Sensor_class_id).First().SensorName
     let sensorsNames = (Seq.map sensorName sensors).ToArray()
-    Array.concat [| args ; sensorsNames ; [|"J"|] |]
+    Array.concat [| args ; sensorsNames ; [|"J"; "matrix_size"|] |]
 
 let names = colNames (exp.First()) (expCases.First()) (Seq.head (expRuns (expCases.First())))
+//names.ToArray().Length
+//exp.First().ArgNames.Split([|";"|], StringSplitOptions.RemoveEmptyEntries).Length
 
 let colIdx name = 
     let mutable res = -1
@@ -177,10 +235,9 @@ sb.AppendLine("")
 
 let sb2 = new System.Text.StringBuilder()
 
-
-//for round in 0..22 do    
-for round in 0..2 do    
-    let casesSubset = expCases.Skip round |> Seq.take 11
+for round in 0..22 do    
+//for round in 0..2 do    
+    let casesSubset = expCases.Skip (round*11) |> Seq.take 11
     let valuesMatrix = data casesSubset
     let vals = valuesMatrix.ToArray()
     let corrMatr = getCorrMatrix vals
@@ -217,36 +274,48 @@ for round in 0..2 do
 
 
 
-
 sb.ToString()
 sb2.ToString()
 
 
-System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_correlations.csv", sb.ToString())
-System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_correlations_text.csv", sb2.ToString())
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_correlations.csv", sb.ToString())
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_correlations_text.csv", sb2.ToString())
 
 
 
 
-// print values
+// --------------------  print values ---------------------
 
 //let casesSubset = expCases.Skip 0 |> Seq.take 1
-let casesSubset = expCases
-
-let valuesMatrix = data casesSubset
 
 let sb3 = new System.Text.StringBuilder()
 names |> Seq.iter (fun (s:string) -> sb3.AppendFormat(@"{0};", s) |> ignore)
 sb3.AppendLine("")
 
-valuesMatrix |> Seq.iter (fun (vals:float[]) ->
-    for f in vals do
-        sb3.AppendFormat(@"{0};", f) |> ignore
-    sb3.AppendLine("") |> ignore
-    )
+for round in 0..22 do    
+//for round in 0..2 do    
+    let casesSubset = expCases.Skip (round*11) |> Seq.take 11
+    let valuesMatrix = data casesSubset
+    let vals = valuesMatrix.ToArray()
+    valuesMatrix |> Seq.iter (fun (vals:float[]) ->
+        for f in vals do
+            sb3.AppendFormat(@"{0};", f) |> ignore
+        sb3.AppendLine("") |> ignore
+        )
+
+
+
 
 sb3.ToString()
 
+
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution.csv", sb3.ToString())
 System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce.csv", sb3.ToString())
 System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\saxpy.csv", sb3.ToString())
+
+
+
+
+// mode = 1, n_device=1, 0|1
+
 

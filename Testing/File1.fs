@@ -61,8 +61,8 @@ let main args =
 
     // declare an experiment
     //let e = new Experiment("saxpy_openCL", (Seq.toArray sensors), 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
-    let e = new Experiment("convolution", (Seq.toArray sensors), 0, [| "mode"; "matrix_w"; "matrix_h"; "filter_size"; "samples"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
-    //let e = new Experiment("reduce", (Seq.toArray sensors), 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+    //let e = new Experiment("convolution", (Seq.toArray sensors), 0, [| "mode"; "matrix_w"; "matrix_h"; "filter_size"; "samples"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+    let e = new Experiment("reduce", (Seq.toArray sensors), 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
     // db helper
     let saver = new Energon.Storage.ExperimentRuntimeSaverExpress(e, "HPLAB\SQLEXPRESS", "Measure")
 
