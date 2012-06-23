@@ -91,6 +91,7 @@ let exps = db.Experiments
 //exps.ToArray()
 let exp = db.Experiments.Where(fun (x:Experiments) -> x.Id = 4)
 let exp = db.Experiments.Where(fun (x:Experiments) -> x.Id = 7)
+let exp = db.Experiments.Where(fun (x:Experiments) -> x.Id = 11)
 let expCasesConvolution = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 4 )
 let expCasesConvolutionDGPU = db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
     if x.Experiment_id = 4 then
@@ -180,12 +181,12 @@ let expCasesReduceIGX = db.ExperimentCases.Where(fun (x:ExperimentCases) ->
     )
 
 
-//let expCases = expCasesReduceDGPU
-//let expCases = expCasesReduceIGX
+let expCases = expCasesReduceDGPU
+let expCases = expCasesReduceIGX
 //let expCases = expCasesSaxpyDGPU
 //let expCases = expCasesSaxpyIGX
 let expCases = expCasesConvolutionDGPU
-//let expCases = expCasesConvolutionIGX
+let expCases = expCasesConvolutionIGX
 //let expCases = expCasesReduce
 //let expCases = expCasesSaxpy
 //let expCases = expCasesConvolution
@@ -262,9 +263,6 @@ let colIdx name =
 let colName idx = names.[idx]
 
 
-let sb = new System.Text.StringBuilder()
-//names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
-names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
 //sb.AppendLine("")
 
 
@@ -274,11 +272,19 @@ let valuesMatrix = data casesSubset
 let vals = valuesMatrix.ToArray()
 let corrMatr = getCorrMatrix vals
 let rows = names.Length - 1
+//let interestingIdx = [| 1;2;7;8;9;16;17;18;19;20;21;22;23;24;25;26;27;28;29;30;31;32;33;34;35;36;37;38 |]
+let interestingIdx = [| 1;2;7;8;9;16;17;18;22;23;26;27;28;29;30;35 |]
+let interestingIdx = [| 1..36 |]
 
-for i in 0..(rows - 1) do
+let sb = new System.Text.StringBuilder()
+sb.Append(" ;");
+//names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
+interestingIdx |> Seq.iter (fun i -> sb.AppendFormat(@"{0};", colName (i+1)) |> ignore)
+
+for i in interestingIdx do
     sb.AppendLine("") |> ignore
     sb.AppendFormat(@"{0};", colName (i+1)) |> ignore
-    for j in 0..(rows - 1) do
+    for j in interestingIdx do
         sb.AppendFormat(@"{0};", corrMatr.[i,j]) |> ignore
 
 
