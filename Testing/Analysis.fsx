@@ -108,6 +108,7 @@ let db = GetLinqContext
 let exps = db.Experiments
 exps.ToArray()
 let exp = db.Experiments.Where(fun (x:Experiments) -> x.Id = 4)
+let exp = db.Experiments.Where(fun (x:Experiments) -> x.Id = 7)
 let expCasesConvolution = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 4 )
 let expCasesConvolutionDGPU = db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
     if x.Experiment_id = 4 then
@@ -115,20 +116,21 @@ let expCasesConvolutionDGPU = db.ExperimentCases.Where(fun (x:ExperimentCases) -
         let mode = args.[0]
         let ndev = args.[6]
         let dev = args.[7]
-        if mode = "1" && ndev = "1" && dev = "0" then
+        if mode = "OPENCL" && ndev = "1" && dev = "0" then
             true
         else
             false
     else
         false    
     )
+//expCasesConvolutionDGPU.Count()
 let expCasesConvolutionIGX = db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
     if x.Experiment_id = 4 then
         let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
         let mode = args.[0]
         let ndev = args.[6]
         let dev = args.[7]
-        if mode = "1" && ndev = "1" && dev = "1" then
+        if mode = "OPENCL" && ndev = "1" && dev = "1" then
             true
         else
             false
@@ -139,8 +141,70 @@ let expCasesConvolutionIGX = db.ExperimentCases.Where(fun (x:ExperimentCases) ->
 let expCasesReduce = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 11 )
 let expCasesSaxpy = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = 7 )
 
+let expCasesSaxpyDGPU = db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
+    if x.Experiment_id = 7 then
+        let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
+        let mode = args.[0]
+        let ndev = args.[5]
+        let dev = args.[6]
+        if mode = "OPENCL" && ndev = "1" && dev = "0" then
+            true
+        else
+            false
+    else
+        false    
+    )
+//expCasesConvolutionDGPU.Count()
+let expCasesSaxpyIGX = db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
+    if x.Experiment_id = 7 then
+        let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
+        let mode = args.[0]
+        let ndev = args.[5]
+        let dev = args.[6]
+        if mode = "OPENCL" && ndev = "1" && dev = "1" then
+            true
+        else
+            false
+    else
+        false
+    )
 
-let expCases = expCasesReduce
+let expCasesReduceDGPU = db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
+    if x.Experiment_id = 11 then
+        let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
+        let mode = args.[0]
+        let ndev = args.[5]
+        let dev = args.[6]
+        if mode = "OPENCL" && ndev = "1" && dev = "0" then
+            true
+        else
+            false
+    else
+        false    
+    )
+//expCasesConvolutionDGPU.Count()
+let expCasesReduceIGX = db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
+    if x.Experiment_id = 11 then
+        let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
+        let mode = args.[0]
+        let ndev = args.[5]
+        let dev = args.[6]
+        if mode = "OPENCL" && ndev = "1" && dev = "1" then
+            true
+        else
+            false
+    else
+        false
+    )
+
+
+let expCases = expCasesReduceDGPU
+let expCases = expCasesReduceIGX
+//let expCases = expCasesSaxpyDGPU
+//let expCases = expCasesSaxpyIGX
+//let expCases = expCasesConvolutionDGPU
+//let expCases = expCasesConvolutionIGX
+//let expCases = expCasesReduce
 //let expCases = expCasesSaxpy
 //let expCases = expCasesConvolution
 
@@ -189,6 +253,7 @@ let data cases =
     cases |> Seq.map (fun (c:ExperimentCases) -> (handleCase c))
 
 let cols = 80
+let cols = 79
 
 let colNames (e:Experiments) (c:ExperimentCases) (r:ExperimentRuns)=
     let args = e.ArgNames.Split([|";"|], StringSplitOptions.RemoveEmptyEntries)
@@ -201,6 +266,7 @@ let colNames (e:Experiments) (c:ExperimentCases) (r:ExperimentRuns)=
 let names = colNames (exp.First()) (expCases.First()) (Seq.head (expRuns (expCases.First())))
 //names.ToArray().Length
 //exp.First().ArgNames.Split([|";"|], StringSplitOptions.RemoveEmptyEntries).Length
+//names.Count()
 
 let colIdx name = 
     let mutable res = -1
@@ -235,9 +301,11 @@ sb.AppendLine("")
 
 let sb2 = new System.Text.StringBuilder()
 
-for round in 0..22 do    
+//for round in 0..22 do    
 //for round in 0..2 do    
-    let casesSubset = expCases.Skip (round*11) |> Seq.take 11
+let round = 0 in
+    let casesSubset = expCases
+    //let casesSubset = expCases.Skip (round*11) |> Seq.take 11
     let valuesMatrix = data casesSubset
     let vals = valuesMatrix.ToArray()
     let corrMatr = getCorrMatrix vals
@@ -278,11 +346,17 @@ sb.ToString()
 sb2.ToString()
 
 
-System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_correlations.csv", sb.ToString())
-System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_correlations_text.csv", sb2.ToString())
+//System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_correlations.csv", sb.ToString())
+//System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_correlations_text.csv", sb2.ToString())
 
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_DGPU_correlations.csv", sb.ToString())
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_IGX_correlations.csv", sb.ToString())
 
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\saxpy_DGPU_correlations.csv", sb.ToString())
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\saxpy_IGX_correlations.csv", sb.ToString())
 
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_DGPU_correlations.csv", sb.ToString())
+System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_IGX_correlations.csv", sb.ToString())
 
 // --------------------  print values ---------------------
 
