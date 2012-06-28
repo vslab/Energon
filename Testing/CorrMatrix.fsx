@@ -105,8 +105,38 @@ let GetLinqContext =
 let db = GetLinqContext
 let exps = db.Experiments
 //exps.ToArray()
+db.Experiments.Where(fun (x:Experiments) -> x.Id = 7).First()
+db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
+        if x.Experiment_id = 7 then
+            let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
+            let mode = args.[0]
+            let ndev = args.[5]
+            let dev = args.[6]
+            let mem = args.[7]
+            if mode = "OPENCL" && ndev = "1" && dev = "1" && mem = "2" then
+                true
+            else
+                false
+        else
+            false    
+        ).First()
+db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
+        if x.Experiment_id = 7 then
+            let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
+            let mode = args.[0]
+            let ndev = args.[5]
+            let dev = args.[6]
+            let mem = args.[7]
+            if mode = "OPENCL" && ndev = "1" && dev = "1"  then
+                true
+            else
+                false
+        else
+            false    
+        ).ToArray()
 
-let createMatrix alg mode memory =
+
+let createMatrix alg mode memoryIN memoryOUT =
     let exp = match alg with
       | "convolution" -> db.Experiments.Where(fun (x:Experiments) -> x.Id = 4)
       | "saxpy" -> db.Experiments.Where(fun (x:Experiments) -> x.Id = 7)
@@ -119,8 +149,9 @@ let createMatrix alg mode memory =
             let mode = args.[0]
             let ndev = args.[6]
             let dev = args.[7]
-            let mem = args.[8]
-            if mode = "OPENCL" && ndev = "1" && dev = "0" && mem = memory then
+            let memin = args.[8]
+            let memout = args.[9]
+            if mode = "OPENCL" && ndev = "1" && dev = "0" && memin = memoryIN && memout = memoryOUT then
                 true
             else
                 false
@@ -133,8 +164,9 @@ let createMatrix alg mode memory =
             let mode = args.[0]
             let ndev = args.[6]
             let dev = args.[7]
-            let mem = args.[8]
-            if mode = "OPENCL" && ndev = "1" && dev = "1" && mem = memory then
+            let memin = args.[8]
+            let memout = args.[9]
+            if mode = "OPENCL" && ndev = "1" && dev = "1" && memin = memoryIN && memout = memoryOUT then
                 true
             else
                 false
@@ -147,8 +179,9 @@ let createMatrix alg mode memory =
             let mode = args.[0]
             let ndev = args.[5]
             let dev = args.[6]
-            let mem = args.[7]
-            if mode = "OPENCL" && ndev = "1" && dev = "0" && mem = memory then
+            let memin = args.[7]
+            let memout = args.[8]
+            if mode = "OPENCL" && ndev = "1" && dev = "0" && memin = memoryIN && memout = memoryOUT then
                 true
             else
                 false
@@ -161,8 +194,9 @@ let createMatrix alg mode memory =
             let mode = args.[0]
             let ndev = args.[5]
             let dev = args.[6]
-            let mem = args.[7]
-            if mode = "OPENCL" && ndev = "1" && dev = "1" && mem = memory then
+            let memin = args.[7]
+            let memout = args.[8]
+            if mode = "OPENCL" && ndev = "1" && dev = "1" && memin = memoryIN && memout = memoryOUT then
                 true
             else
                 false
@@ -175,8 +209,9 @@ let createMatrix alg mode memory =
             let mode = args.[0]
             let ndev = args.[5]
             let dev = args.[6]
-            let mem = args.[7]
-            if mode = "OPENCL" && ndev = "1" && dev = "0" && mem = memory then
+            let memin = args.[7]
+            let memout = args.[8]
+            if mode = "OPENCL" && ndev = "1" && dev = "0" && memin = memoryIN && memout = memoryOUT then
                 true
             else
                 false
@@ -189,8 +224,9 @@ let createMatrix alg mode memory =
             let mode = args.[0]
             let ndev = args.[5]
             let dev = args.[6]
-            let mem = args.[7]
-            if mode = "OPENCL" && ndev = "1" && dev = "1" && mem = memory then
+            let memin = args.[7]
+            let memout = args.[8]
+            if mode = "OPENCL" && ndev = "1" && dev = "1" && memin = memoryIN && memout = memoryOUT then
                 true
             else
                 false
@@ -322,7 +358,7 @@ let createMatrix alg mode memory =
             sb.AppendFormat(@"{0};", corrMatr.[i,j]) |> ignore
 
 
-    let filename = String.Format(@"C:\Users\root\Desktop\Energon\Measures\{0}_{1}_{2}.csv", alg, mode, memory)
+    let filename = String.Format(@"C:\Users\root\Desktop\Energon\Measures\{0}_{1}_{2}_{3}.csv", alg, mode,  memoryIN, memoryOUT)
     System.IO.File.WriteAllText(filename, sb.ToString())
 
     let sb2 = new System.Text.StringBuilder()
@@ -330,7 +366,7 @@ let createMatrix alg mode memory =
     //names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
     interestingIdx |> Seq.iter (fun i -> sb2.AppendFormat(@"{0};", colName (i)) |> ignore)
     
-    let rows = corrMatr.GetLength(0)
+    let rows = corrMatr2.GetLength(0)
     for i in 0..(rows-1) do
         sb2.AppendLine("") |> ignore
         sb2.AppendFormat(@" ;") |> ignore
@@ -338,15 +374,21 @@ let createMatrix alg mode memory =
         for j in interestingIdx do
             sb2.AppendFormat(@"{0};", corrMatr2.[i,j]) |> ignore
 
-    let filename2 = String.Format(@"C:\Users\root\Desktop\Energon\Measures\data_ {0}_{1}_{2}.csv", alg, mode, memory)
+    let filename2 = String.Format(@"C:\Users\root\Desktop\Energon\Measures\data_{0}_{1}_{2}_{3}.csv", alg, mode, memoryIN, memoryOUT)
     System.IO.File.WriteAllText(filename2, sb.ToString())
 
-createMatrix "convolution" "DGPU" "0"
 
-for alg in [| "convolution"; "saxpy"; "reduce" |] do
-    for mode in [| "DGPU"; "IGX" |] do
-        for mem in [| "0"; "1"; "2" |]
-            createMatrix alg mode mem
+for mode in [| "DGPU"; "IGX" |] do
+    createMatrix "convolution" mode "0" "0"
+    createMatrix "convolution" mode "1" "1"
+    createMatrix "convolution" mode "2" "2"
+    createMatrix "saxpy" mode "0" "0"
+    createMatrix "saxpy" mode "1" "1"
+    createMatrix "saxpy" mode "1" "2"
+    createMatrix "reduce" mode "0" "0"
+    createMatrix "reduce" mode "1" "1"
+    createMatrix "reduce" mode "1" "2"
+
 
 
 1+1
