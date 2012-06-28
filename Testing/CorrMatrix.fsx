@@ -2,6 +2,22 @@
 #r @"Energon.Measuring.dll"
 open Energon.Measuring
 
+open System.Drawing
+
+let testGetCorrMatrix (data:seq<float array>) =
+    let dataAsArray = Seq.toArray data
+    let firstRow = dataAsArray.[0]
+    let cols = firstRow.Length
+    let rows = dataAsArray.Length
+    let matr = Array2D.init rows cols (fun i j -> dataAsArray.[i].[j])
+    matr
+    (*
+    let col c = seq {
+            for i in 0..(rows-1) do
+                yield dataAsArray.[i].[c]
+        }
+    Array2D.init cols cols (fun i j -> Seq.average (col j))
+    *)
 let getCorrMatrix data =
     let getMatrixInfo nCol (count,crossProd:float array array,sumVector:float array,sqVector:float array) (newLine:float array)   = 
         for i in 0..(nCol-1) do
@@ -90,7 +106,7 @@ let db = GetLinqContext
 let exps = db.Experiments
 //exps.ToArray()
 
-let createMatrix alg mode =
+let createMatrix alg mode memory =
     let exp = match alg with
       | "convolution" -> db.Experiments.Where(fun (x:Experiments) -> x.Id = 4)
       | "saxpy" -> db.Experiments.Where(fun (x:Experiments) -> x.Id = 7)
@@ -103,7 +119,8 @@ let createMatrix alg mode =
             let mode = args.[0]
             let ndev = args.[6]
             let dev = args.[7]
-            if mode = "OPENCL" && ndev = "1" && dev = "0" then
+            let mem = args.[8]
+            if mode = "OPENCL" && ndev = "1" && dev = "0" && mem = memory then
                 true
             else
                 false
@@ -116,7 +133,8 @@ let createMatrix alg mode =
             let mode = args.[0]
             let ndev = args.[6]
             let dev = args.[7]
-            if mode = "OPENCL" && ndev = "1" && dev = "1" then
+            let mem = args.[8]
+            if mode = "OPENCL" && ndev = "1" && dev = "1" && mem = memory then
                 true
             else
                 false
@@ -129,7 +147,8 @@ let createMatrix alg mode =
             let mode = args.[0]
             let ndev = args.[5]
             let dev = args.[6]
-            if mode = "OPENCL" && ndev = "1" && dev = "0" then
+            let mem = args.[7]
+            if mode = "OPENCL" && ndev = "1" && dev = "0" && mem = memory then
                 true
             else
                 false
@@ -142,7 +161,8 @@ let createMatrix alg mode =
             let mode = args.[0]
             let ndev = args.[5]
             let dev = args.[6]
-            if mode = "OPENCL" && ndev = "1" && dev = "1" then
+            let mem = args.[7]
+            if mode = "OPENCL" && ndev = "1" && dev = "1" && mem = memory then
                 true
             else
                 false
@@ -155,7 +175,8 @@ let createMatrix alg mode =
             let mode = args.[0]
             let ndev = args.[5]
             let dev = args.[6]
-            if mode = "OPENCL" && ndev = "1" && dev = "0" then
+            let mem = args.[7]
+            if mode = "OPENCL" && ndev = "1" && dev = "0" && mem = memory then
                 true
             else
                 false
@@ -168,7 +189,8 @@ let createMatrix alg mode =
             let mode = args.[0]
             let ndev = args.[5]
             let dev = args.[6]
-            if mode = "OPENCL" && ndev = "1" && dev = "1" then
+            let mem = args.[7]
+            if mode = "OPENCL" && ndev = "1" && dev = "1" && mem = memory then
                 true
             else
                 false
@@ -251,6 +273,7 @@ let createMatrix alg mode =
     let valuesMatrix = data casesSubset
     let vals = valuesMatrix.ToArray()
     let corrMatr = getCorrMatrix vals
+    let corrMatr2 = testGetCorrMatrix vals
     let rows = names.Length - 1
     //let interestingIdx = [| 1;2;7;8;9;16;17;18;19;20;21;22;23;24;25;26;27;28;29;30;31;32;33;34;35;36;37;38 |]
     //let interestingIdx = [| 1;2;7;8;9;16;17;18;22;23;26;27;28;29;30;35 |]
@@ -298,25 +321,46 @@ let createMatrix alg mode =
         for j in interestingIdx do
             sb.AppendFormat(@"{0};", corrMatr.[i,j]) |> ignore
 
-    match (alg,mode) with
-      | "convolution", "DGPU" -> System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_DGPU_corrMatr.csv", sb.ToString())
-      | "convolution", "IGX" -> System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\convolution_IGX_corrMatr.csv", sb.ToString())
-      | "saxpy", "DGPU" -> System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\saxpy_DGPU_corrMatr.csv", sb.ToString())
-      | "saxpy", "IGX" -> System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\saxpy_IGX_corrMatr.csv", sb.ToString())
-      | "reduce", "DGPU" -> System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_DGPU_corrMatr.csv", sb.ToString())
-      | "reduce", "IGX" -> System.IO.File.WriteAllText(@"C:\Users\root\Desktop\Energon\Measures\reduce_IGX_corrMatr.csv", sb.ToString())
-      | _,_ -> ()
 
+    let filename = String.Format(@"C:\Users\root\Desktop\Energon\Measures\{0}_{1}_{2}.csv", alg, mode, memory)
+    System.IO.File.WriteAllText(filename, sb.ToString())
 
-createMatrix "convolution" "DGPU"
-createMatrix "convolution" "IGX"
-createMatrix "saxpy" "DGPU"
-createMatrix "saxpy" "IGX"
-createMatrix "reduce" "DGPU"
-createMatrix "reduce" "IGX"
+    let sb2 = new System.Text.StringBuilder()
+    sb2.Append(" ;") |> ignore
+    //names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
+    interestingIdx |> Seq.iter (fun i -> sb2.AppendFormat(@"{0};", colName (i)) |> ignore)
+    
+    let rows = corrMatr.GetLength(0)
+    for i in 0..(rows-1) do
+        sb2.AppendLine("") |> ignore
+        sb2.AppendFormat(@" ;") |> ignore
+        //sb.AppendFormat(@"{0};", colName (i)) |> ignore
+        for j in interestingIdx do
+            sb2.AppendFormat(@"{0};", corrMatr2.[i,j]) |> ignore
+
+    let filename2 = String.Format(@"C:\Users\root\Desktop\Energon\Measures\data_ {0}_{1}_{2}.csv", alg, mode, memory)
+    System.IO.File.WriteAllText(filename2, sb.ToString())
+
+createMatrix "convolution" "DGPU" "0"
+
+for alg in [| "convolution"; "saxpy"; "reduce" |] do
+    for mode in [| "DGPU"; "IGX" |] do
+        for mem in [| "0"; "1"; "2" |]
+            createMatrix alg mode mem
 
 
 1+1
+
+
+let b = new Bitmap(1024, 1024)
+let g = Graphics.FromImage(b)
+let p = new Pen(Color.Black)
+let brush = new SolidBrush(Color.Black)
+let f = new Font("Arial", 24.0F, FontStyle.Bold)
+g.DrawString("test", f, brush, 1.0F, 100.0F) 
+g.DrawRectangle(p, 100, 100, 900, 900)
+g.Dispose()
+b.Save(@"C:\Users\root\Desktop\Energon\Measures\bitmap.png")
 
 
 
