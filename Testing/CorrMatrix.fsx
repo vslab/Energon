@@ -314,7 +314,7 @@ let createMatrix alg mode memoryIN memoryOUT =
     //let interestingIdx = [| 1;2;7;8;9;16;17;18;19;20;21;22;23;24;25;26;27;28;29;30;31;32;33;34;35;36;37;38 |]
     //let interestingIdx = [| 1;2;7;8;9;16;17;18;22;23;26;27;28;29;30;35 |]
     //let interestingIdx = [| 1..36 |]
-    let interestingIdx = match mode with
+    (*let interestingIdx = match mode with
         | "DGPU" -> [| 
             colIdx "vector_size"; 
             colIdx "extechWatt"; 
@@ -345,7 +345,8 @@ let createMatrix alg mode memoryIN memoryOUT =
             colIdx "fetchUnitStalled_2"; 
             colIdx "fastPath_2"; 
             |]
-    //let interestingIdx = [| 1..(rows-1) |]
+    *)
+    let interestingIdx = [| 1..(rows-1) |]
     let sb = new System.Text.StringBuilder()
     sb.Append(" ;") |> ignore
     //names |> Seq.iter (fun (s:string) -> sb.AppendFormat(@"{0};", s) |> ignore)
@@ -358,7 +359,7 @@ let createMatrix alg mode memoryIN memoryOUT =
             sb.AppendFormat(@"{0};", corrMatr.[i,j]) |> ignore
 
 
-    let filename = String.Format(@"C:\Users\root\Desktop\Energon\Measures\{0}_{1}_{2}_{3}.csv", alg, mode,  memoryIN, memoryOUT)
+    let filename = String.Format(@"C:\Users\root\Desktop\Energon\Measures\{0}_{1}_{2}_{3}_full.csv", alg, mode,  memoryIN, memoryOUT)
     System.IO.File.WriteAllText(filename, sb.ToString())
 
     let sb2 = new System.Text.StringBuilder()
@@ -374,8 +375,8 @@ let createMatrix alg mode memoryIN memoryOUT =
         for j in interestingIdx do
             sb2.AppendFormat(@"{0};", corrMatr2.[i,j]) |> ignore
 
-    let filename2 = String.Format(@"C:\Users\root\Desktop\Energon\Measures\data_{0}_{1}_{2}_{3}.csv", alg, mode, memoryIN, memoryOUT)
-    System.IO.File.WriteAllText(filename2, sb.ToString())
+    let filename2 = String.Format(@"C:\Users\root\Desktop\Energon\Measures\data_{0}_{1}_{2}_{3}_full.csv", alg, mode, memoryIN, memoryOUT)
+    System.IO.File.WriteAllText(filename2, sb2.ToString())
 
 
 for mode in [| "DGPU"; "IGX" |] do
