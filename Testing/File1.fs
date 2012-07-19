@@ -37,9 +37,9 @@ let main args =
     extechV.Close()
     *)
     let name1 = "completionTime"
-    let names = [|  "gpuBusy" ; "aluInsts" ; "fetchInsts" ; "wrInsts" ; "waveFronts" ; "AluBusy" ; "aluFetchRatio" ; 
-                "aluPacking" ; "aluPacking" ; "fetchUnitBusy" ; "fetchUnitStalled" ; "fetchSize" ; "cacheHit" ; "writeUnitStalled" ; 
-                "ldsFetchInst" ; "aluStalledByLds" ; "ldsBankConfl" ; "fastPath" ; "completePath" ; "pathUtil" |]
+    let names = [|  "GPUTime" ; "gpuBusy" ; "aluInsts" ; "fetchInsts" ; "wrInsts" ; "waveFronts" ; "AluBusy" ; "aluFetchRatio" ; 
+                "aluPacking" ; "fetchUnitBusy" ; "fetchUnitStalled" ; "fetchSize" ; "cacheHit" ; "writeUnitStalled" ; 
+                "ldsFetchInst" ; "ldsWriteInst" ; "aluStalledByLds" ; "ldsBankConfl" ; "fastPath" ; "completePath" ; "pathUtil" |]
     let allNames = seq{
         yield name1
         let n1 = Seq.map (fun (s:string) -> System.String.Format( "{0}_1", s)) names |> Seq.toArray
@@ -60,9 +60,10 @@ let main args =
         }
 
     // declare an experiment
-    //let e = new Experiment("saxpy_openCL", (Seq.toArray sensors), 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
-    //let e = new Experiment("convolution", (Seq.toArray sensors), 0, [| "mode"; "matrix_w"; "matrix_h"; "filter_size"; "samples"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
-    let e = new Experiment("reduce", (Seq.toArray sensors), 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+    //let e = new Experiment("saxpy_V8800", (Seq.toArray sensors), 0, [| "mode"; "vector_size"; "samples"; "n_thread_host"; "n_device"; "d0_name"; "d0_mode_in"; "d0_mode_out"; "d1_name"; "d1_mode_in"; "d1_mode_out"; "d2_name"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+    //let e = new Experiment("convolution_V8800", (Seq.toArray sensors), 0, [| "mode"; "matrix_w"; "matrix_h"; "filter_size"; "samples"; "n_thread_host"; "n_device"; "d0_name"; "d0_mode_in"; "d0_mode_out"; "d1_name"; "d1_mode_in"; "d1_mode_out"; "d2_name"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+    let e = new Experiment("reduce_V8800_lin", (Seq.toArray sensors), 0, [| "mode"; "vector_size"; "samples"; "n_thread_host"; "n_device"; "d0_name"; "d0_mode_in"; "d0_mode_out"; "d1_name"; "d1_mode_in"; "d1_mode_out"; "d2_name"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
+    //let e = new Experiment("reduce_V8800", (Seq.toArray sensors), 0, [| "mode"; "vector_size"; "samples"; "n_thread_host"; "n_device"; "d0_name"; "d0_mode_in"; "d0_mode_out"; "d1_name"; "d1_mode_in"; "d1_mode_out"; "d2_name"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
     // db helper
     let saver = new Energon.Storage.ExperimentRuntimeSaverExpress(e, "HPLAB\SQLEXPRESS", "Measure")
 

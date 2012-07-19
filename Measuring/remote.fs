@@ -14,6 +14,7 @@ type WebListener(startCallback, stopCallback, newCase) =
     let context = listener.EndGetContext(result)
     let request = context.Request
     let relPath = request.Url.PathAndQuery.Substring("/Temporary_Listen_Addresses/".Length )
+    printf "%s\n" relPath |> ignore
     let spl = List.toArray ["/"; "?"]
     let tags = relPath.Split(spl, StringSplitOptions.RemoveEmptyEntries) |> Array.map (fun (s:string) -> 
         printf "%s\n" s |> ignore
