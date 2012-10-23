@@ -43,19 +43,17 @@ void ArraySort(int This[], CMPFUN fun_ptr, uint32 the_len)
   }
 }
  
-#define ARRAY_SIZE 14
+int *my_array;
  
-int my_array[ARRAY_SIZE];
- 
-void fill_array()
+uint32 fill_array(int array_size)
 {
   int indx;
-
-  for (indx=0; indx < ARRAY_SIZE; ++indx)
+  uint32 checksum = 0; 
+  for (indx=0; indx < array_size; ++indx)
   {
-    my_array[indx] = rand();
+    checksum += my_array[indx] = rand();
   }
-  /* my_array[ARRAY_SIZE - 1] = ARRAY_SIZE / 3; */
+  return checksum;
 }
  
 int cmpfun(int a, int b)
@@ -68,26 +66,25 @@ int cmpfun(int a, int b)
     return 0;
 }
  
-int main()
+int main(int argc, char *argv[])
 {
   int indx;
-  int indx2;
-
-  for (indx2 = 0; indx2 < 80000; ++indx2)
-  { 
-    fill_array();
-    ArraySort(my_array, cmpfun, ARRAY_SIZE);
-    for (indx=1; indx < ARRAY_SIZE; ++indx)
+int array_size;
+  if (argc > 1)
     {
-      if (my_array[indx - 1] > my_array[indx])
-      {
-        printf("bad sort\n");
-        return(1);
-      }
+	array_size = atoi(argv[1]);
     }
-  }
+    else
+    {
+	array_size = 1024;
+    }
 
+  my_array = (int *) malloc(sizeof(int)*array_size);
+  fill_array(array_size);
+ 
+  ArraySort(my_array, cmpfun, array_size);
+ 
+  free(my_array);
   return(0);
 }
- 
- 
+
