@@ -33,6 +33,8 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
 
     let mutable id = 0
 
+    let mutable (handler:Reading->unit) = fun (r:Reading) -> ()
+
     [<CLIEvent>]
     member this.NewReadingEvent = newReadingEvent.Publish
 
@@ -97,9 +99,12 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
             Seq.iter (fun s -> currentData.Add(s, new Queue<Reading>())) sensors
         else
             let handleSensor (s:GenericSensor) =
+                handler <- fun (r:Reading) -> newReadingEvent.Trigger(self, s, r)
                 match s with
-                | :? PushSensor as ps -> ps.NewValue.Add(fun (r:Reading) -> newReadingEvent.Trigger(self, s, r))
-                | :? RemoteSensor as ps -> ps.NewValue.Add(fun (r:Reading) -> newReadingEvent.Trigger(self, s, r))
+                | :? PushSensor as ps -> 
+                    ps.NewValue.Add(handler)
+                | :? RemoteSensor as ps -> 
+                    ps.NewValue.Add(handler)
                 | _ -> ()
                 ()
             sensors |> Seq.iter handleSensor
@@ -111,7 +116,6 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
         running <- false
         Seq.iter (fun (s:GenericSensor) -> s.Stop()) sensors
         results.Clear()
-        experimentRunStopping.Trigger(self)
         if push then
             Seq.iter (fun (s:GenericSensor) -> 
                 match s with
@@ -123,18 +127,33 @@ type ExperimentRun(sensors:seq<GenericSensor>) as self =
         else
             timer.Enabled <- false
             Seq.iter (fun (s:GenericSensor) -> results.Add(s, currentData.[s].ToArray() ) ) sensors
+        experimentRunStopping.Trigger(self)
         let meanAndStdDevReading numSeq = 
             if Seq.isEmpty numSeq then
                 (0.,0.)
             else
-                let sqr (x:float) = x * x
-                let mean = 
-                    numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.average
-                let variance = 
-                    numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.averageBy (fun x -> sqr(x - mean))
-                (mean, sqrt(variance))
+                try
+                    let sqr (x:float) = x * x
+                    let mean = 
+                        numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.average
+                    let variance = 
+                        numSeq |> Seq.map (fun (r:Reading) -> r.Value) |> Seq.averageBy (fun x -> sqr(x - mean))
+                    (mean, sqrt(variance))
+                with
+                | _ -> (0.0,0.0)
         // means and std. dev.
-        sensors |> Seq.iter (fun s -> means.Add(s, meanAndStdDevReading results.[s])) 
+        //sensors |> Seq.iter (fun s -> means.Add(s, meanAndStdDevReading results.[s])) 
+        
+        let handleSensor (s:GenericSensor) =
+                match s with
+                | :? PushSensor as ps -> 
+                    ps.ResetHandlers()
+                | :? RemoteSensor as ps -> 
+                    ps.ResetHandlers()
+                | _ -> ()
+                ()
+        sensors |> Seq.iter handleSensor
+
 
 
         

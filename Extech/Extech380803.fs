@@ -46,7 +46,7 @@ type Extech380803MultiSensor() as self =
                         t, float (sign *  value) / float divider
                 with
                     | _ -> t, nan
-            | _ -> raise (System.ArgumentException(string data + " does not have the correct head/tail"))
+            | _ ->  raise (System.ArgumentException(string data + " does not have the correct head/tail"))
     let readData (buffer:int[]) = (buffer.[0], buffer.[1], buffer.[2], buffer.[3], buffer.[4])
     let parse (buf: byte[]) (i) =
         let t,v = buf |> Seq.ofArray |> Seq.skip i |> Seq.take 5 |> Seq.map (fun x -> int x) |> Array.ofSeq |> readData |> parseValue
@@ -63,6 +63,7 @@ type Extech380803MultiSensor() as self =
     let port = new SerialPort(BaudRate = 9600, DataBits = 8, DtrEnable = true, Handshake = Handshake.None, Parity = Parity.None, ReadTimeout = 2000, StopBits = StopBits.One)
     let s = 
         port.Open()
+        port.ReadTimeout <- 10000
         port.BaseStream
     let rbuf : byte array = Array.zeroCreate 64
     //let setValue(v)=
@@ -76,10 +77,16 @@ type Extech380803MultiSensor() as self =
                 //let sb = new StringBuilder()
                 let  len = ref 0
                 while !len < 20 do
-                    len := !len + port.Read(rbuf, !len, 20 - !len)
+                    try
+                        len := !len + port.Read(rbuf, !len, 20 - !len)
+                    with 
+                    | _ -> ()
                 if !len = 20 then
                     for i in 0..5..(!len - 5) do
-                        parse rbuf i
+                        try
+                            parse rbuf i
+                        with
+                        | _ -> ()
                     //System.Console.WriteLine(sb.ToString())
                 let elapsed = (DateTime.Now - tstart).Milliseconds
                 if dt > elapsed then

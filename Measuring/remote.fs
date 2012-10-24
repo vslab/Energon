@@ -15,7 +15,10 @@ type WebListener(startCallback, stopCallback, newCase) =
     let request = context.Request
     let relPath = request.Url.PathAndQuery.Substring("/Temporary_Listen_Addresses/".Length )
     let spl = List.toArray ["/"; "?"]
-    let tags = relPath.Split(spl, StringSplitOptions.RemoveEmptyEntries)
+    let tags = relPath.Split(spl, StringSplitOptions.RemoveEmptyEntries) |> Array.map (fun (s:string) -> 
+        printf "%s\n" s |> ignore
+        System.Web.HttpUtility.UrlDecode(s) 
+        )
     let op = tags.[0]
     match op with 
       | "start" -> startCallback()
@@ -49,6 +52,7 @@ type RemoteExperimentHelper(e:Experiment) =
         let case = e.Cases.Item (e.Cases.Count - 1)
         case.AddExperimentRun(er)
         er.Start(true)
+        printf "received start/n"
     let stop(vals) =
         let vq = new Queue<string>()
         Seq.iter (fun (s:string) -> vq.Enqueue(s)) vals
@@ -57,7 +61,12 @@ type RemoteExperimentHelper(e:Experiment) =
             match s with
             | :? RemoteSensor as rs -> 
                 let raw = vq.Dequeue()
-                let floatV = System.Single.Parse(raw)
+                let ci = System.Globalization.CultureInfo.InstalledUICulture
+                let ni =  ci.NumberFormat.Clone()  :?> (System.Globalization.NumberFormatInfo)
+                ni.NumberDecimalSeparator <- "."
+
+                let floatV = System.Single.Parse(raw, ni)
+                printf "%f\n" floatV
                 let r = new Reading(DateTime.Now, rs.ValueType(), float(floatV), raw :> obj)
                 rs.PushValue r
             | _ -> ()
@@ -65,6 +74,8 @@ type RemoteExperimentHelper(e:Experiment) =
         let case = e.Cases.Item (e.Cases.Count - 1)
         let er = case.Runs.Item (case.Runs.Count - 1)
         er.Stop()
+        printf "case "
+
     let caseCallback(args) =
         let tail = Seq.skip 1 args
         let argsAsObj = tail |> Seq.map (fun (s:string) -> (s :> obj))
@@ -93,14 +104,14 @@ type RemoteSensorHelper(ip:string) =
     member x.stop(par:seq<string>) =
         let sb = new System.Text.StringBuilder()
         sb.AppendFormat(@"{0}/stop", address) |> ignore
-        par |> Seq.iter (fun s -> sb.AppendFormat(@"/{0}", s) |> ignore)
+        par |> Seq.iter (fun s -> sb.AppendFormat(@"/{0}", System.Web.HttpUtility.UrlEncode(s)) |> ignore)
         let addr = sb.ToString()
         try
             wc.DownloadString(addr) |> ignore
             true
         with 
             | _ -> false
-    member x.case(args:seq<string>) =
+    member x.experimentCase(args:seq<string>) =
         let sb = new System.Text.StringBuilder()
         sb.AppendFormat(@"{0}/case", address) |> ignore
         args |> Seq.iter (fun s -> sb.AppendFormat(@"/{0}", s) |> ignore)

@@ -4,12 +4,16 @@ open System
 
 type RemoteSensor(name:string, valueType) = 
     inherit GenericSensor(name, valueType)
-    let newValue = Event<Reading>()
+    let mutable newValue = Event<Reading>()
 
     /// the last reading from the sensor
     let mutable lastr = new Reading(DateTime.Now, valueType, 0., null)  
+    
+    member this.ResetHandlers() =
+        newValue <- new Event<Reading>()
 
     abstract member PushValue: Reading -> unit
+    
     default x.PushValue v = 
         lastr <- v 
         newValue.Trigger(lastr)

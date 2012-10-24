@@ -10,10 +10,14 @@ open System.Data.SqlServerCe;
 open Energon.Measuring
 open System.Text
 open Energon.SQLCE
+open System.Collections.Generic
 
 
-type ExperimentRuntimeSaver(exp:Experiment, file) =
+type ExperimentRuntimeSaverCE(exp:Experiment, file) =
     let l = ref 0 
+    let mutable currExpId = 0
+    let mutable currExpCaseId = 0
+    let mutable currExpRunId = 0
     let getConStr file = 
         let conStr = "Data Source=" + file + ";" in
         conStr;
@@ -23,7 +27,10 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         if (context.DatabaseExists() = false) then
              context.CreateDatabase()
         context
-    let db = GetLinqContext file
+    let db = 
+        let context = GetLinqContext file
+        context.Connection.Open()
+        context
     let first (a,b) = a
     let second (a,b) = b
     let argsToString (args:seq<obj>) = 
@@ -40,15 +47,19 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         let sensorclasses = db.SensorClasses.Where(fun (x:SensorClasses) -> x.SensorName.ToLower() = s.Name.ToLower() )
         if (sensorclasses.Count() > 0) then
             // sensor class already present
-            sensorclasses.First()
+            let s = sensorclasses.First()
+            s
         else
             // create one
             let newsensorclass = new Energon.SQLCE.SensorClasses()
             newsensorclass.SensorName <- s.Name
-            lock l (fun () ->
-                db.SensorClasses.InsertOnSubmit(newsensorclass)
-                db.SubmitChanges()
-                )
+            //lock l (fun () ->
+            //let t = db.Connection.BeginTransaction()
+            //db.Transaction <- t
+            db.SensorClasses.InsertOnSubmit(newsensorclass)
+            db.SubmitChanges(ConflictMode.ContinueOnConflict)
+            //t.Commit()
+            //    )
             newsensorclass
     let sensors = Seq.map (fun s1 -> handleSensor s1 ) (exp.Sensors.ToArray())
 
@@ -61,18 +72,24 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         experiment.Note <- exp.Note
         experiment.Iter <- new Nullable<int>( exp.IterCount)
         experiment.ArgNames <- argsNamesToString (exp.ArgNames)
-        lock l (fun () ->
-            db.Experiments.InsertOnSubmit(experiment)
-            db.SubmitChanges())
+        //lock l (fun () ->
+        //let t = db.Connection.BeginTransaction()
+        //db.Transaction <- t
+        db.Experiments.InsertOnSubmit(experiment)
+        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        //t.Commit()
         exp.ID <- experiment.Id
 
     let saveExperimentCase (exp:Experiment) (case:ExperimentCase) =
         let expCase = new Energon.SQLCE.ExperimentCases()
         expCase.Experiment_id <- exp.ID
         expCase.Args <- argsToString (case.Args)
-        lock l (fun () ->
-            db.ExperimentCases.InsertOnSubmit(expCase)
-            db.SubmitChanges())
+        //lock l (fun () ->
+        //let t = db.Connection.BeginTransaction()
+        //db.Transaction <- t
+        db.ExperimentCases.InsertOnSubmit(expCase)
+        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        //t.Commit()
         case.ID <- expCase.Id
 
     let saveExperimentRun (c:ExperimentCase) (r:ExperimentRun) =
@@ -81,32 +98,35 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         run.Args <- argsToString c.Args
         run.Start <- new Nullable<DateTime>( r.StartTime )
         //run.End <- new Nullable<DateTime>( r.EndTime )
-        lock l (fun() ->
-            db.ExperimentRuns.InsertOnSubmit(run)
-            db.SubmitChanges())
+        //let t = db.Connection.BeginTransaction()
+        //db.Transaction <- t
+        db.ExperimentRuns.InsertOnSubmit(run)
+        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        //t.Commit()
         r.ID <- run.Id
         let handleSensor (s:GenericSensor) = 
             let sensor = new Energon.SQLCE.Sensors()
             sensor.Experiment_run_id <- run.Id
             let sensorClass = sensorClassFromSensor s
             sensor.Sensor_class_id <- sensorClass.Id
-            lock l (fun () ->
-                db.Sensors.InsertOnSubmit(sensor)
-                db.SubmitChanges())
+            //let t = db.Connection.BeginTransaction()
+            //db.Transaction <- t
+            db.Sensors.InsertOnSubmit(sensor)
+            db.SubmitChanges(ConflictMode.ContinueOnConflict)
+            //t.Commit()
             s.ID <- sensor.Id
         c.Sensors |> Seq.iter handleSensor
-
+        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        
     let experimentRunStarting (r:ExperimentRun) =
         let run = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Id = r.ID).First()
         run.Start <- new Nullable<DateTime>( r.StartTime )
-        lock l (fun() ->
-            db.SubmitChanges())
+        //let t = db.Connection.BeginTransaction()
+        //db.Transaction <- t
+        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        //t.Commit()
 
-    let experimentRunStopping (r:ExperimentRun) =
-        let run = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Id = r.ID).First()
-        run.End <- new Nullable<DateTime>( r.EndTime )
-        lock l (fun() ->
-            db.SubmitChanges())
+    let readingsList = new List<Experiment*ExperimentCase*ExperimentRun*GenericSensor*Reading>()
 
     let saveReading (run:ExperimentRun) (sensor:GenericSensor) (reading:Reading) =
         let r = new Measurements1()
@@ -114,12 +134,29 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
         r.Sensor_id <- sensor.ID
         r.Value <- reading.Value
         // TODO: RAW
-        lock l (fun() ->
+        //let t = db.Connection.BeginTransaction()
+        //db.Transaction <- t
+        try
             db.Measurements1.InsertOnSubmit(r)
-            db.SubmitChanges())
+            db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        with
+        | _ -> printf "exception saving measure\n"
+        //t.Commit()
+
+    let experimentRunStopping (r:ExperimentRun) =
+        let run = db.ExperimentRuns.Where(fun (x:ExperimentRuns) -> x.Id = r.ID).First()
+        run.End <- new Nullable<DateTime>( r.EndTime )
+        //let t = db.Connection.BeginTransaction()
+        //db.Transaction <- t
+        db.SubmitChanges(ConflictMode.ContinueOnConflict)
+        //t.Commit()
+        for (e,c,r,s,read) in readingsList do
+            saveReading r s read
+        readingsList.Clear()
 
     let handleReading(exp:Experiment, case:ExperimentCase, run:ExperimentRun, sensor:GenericSensor, reading:Reading) =
-        saveReading run sensor reading
+        readingsList.Add(exp,case,run,sensor,reading)
+        //saveReading run sensor reading
     do
         exp.NewReadingEvent.Add(handleReading)
         exp.ExperimentRunStartingEvent.Add(fun (exp, case, run) -> 
@@ -131,12 +168,12 @@ type ExperimentRuntimeSaver(exp:Experiment, file) =
                 saveExperimentRun case run
             experimentRunStarting run 
             )
-        exp.ExperimentRunStoppingEvent.Add(fun (exp, case, run) -> experimentRunStopping run )
+        exp.ExperimentRunStoppingEvent.Add(fun (exp, case, run) -> 
+            experimentRunStopping run )
+
 
     member x.LinqContext
         with get() = db
 
-    member x.CloseDB() =
-        db.Dispose()        
 
 

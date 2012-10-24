@@ -35,9 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FSharp.Data.TypeProviders, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-    <Reference Include="FSharp.PowerPack.Linq, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809">
-      <Private>True</Private>
-    </Reference>
+    <Reference Include="FSharp.PowerPack.Linq, Version=2.0.0.0, Culture=neutral, PublicKeyToken=a19089b1c74d0809" />
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
@@ -73,11 +71,12 @@
     <None Include="sqlcese40.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Compile Include="ExperimentRuntimeSaver.fs" />
+    <Compile Include="ExperimentRuntimeSaverCE.fs" />
     <Compile Include="ExperimentLoader.fs" />
     <None Include="System.Data.SqlServerCe.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Compile Include="ExperimentRuntimeSaverExpress.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Measuring\Measuring.fsproj">
@@ -88,6 +87,11 @@
     <ProjectReference Include="..\SqlCompactDb\Measurement\SQLCE.csproj">
       <Name>SQLCE</Name>
       <Project>{7675a39a-3b2c-45d6-a4e6-2f5f07b0877e}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SQLExpress\SQLExpress.csproj">
+      <Name>SQLExpress</Name>
+      <Project>{012f4b6f-ca69-48d8-bf73-f5267882ae29}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
