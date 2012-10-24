@@ -11,15 +11,28 @@
 PROGR=$1
 INSIZE=$2
 REMOTE=$3
+PERFARGS=" "
 
 cd bin
 
+# available performance counters
 declare -a availPerfCounters
+# active performance counters
+declare -a perfcounters
+
+function printAvailablePerfCounters {
+  echo "Available performance counters are: ${availPerfCounters[@]}"
+}
+
+function printSelectedPerfCounters {
+  echo "Selected performance counters are: ${perfcounters[@]}"
+}
 
 function setPerformanceCounters {
+  # gather the available perf counters
   perfout=`perf list hw 2>&1`
   ll=($perfout)
-  count=0
+  count=1
   declare -a res
   divisor=":"
   for w in ${ll[@]}; 
@@ -30,11 +43,53 @@ function setPerformanceCounters {
         ((count--))
       else
         availPerfCounters[$count]=$w
+        echo $count: $w
+      fi
+    ((count++))
+    fi
+  done
+
+  quit="no"
+  while [ $quit != "yes" ]
+  do
+    printSelectedPerfCounters
+    count=1
+    echo "0. done"
+    for p in ${availPerfCounters[@]}; do
+      present="no"
+      for a in ${perfcounters[@]}; do
+        if [ $p == $a ] ; then
+          present="yes"
+        fi
+      done
+      if [ $present == "no" ] ; then
+        echo "$count. $p (ADD)"
+      else
+        echo "$count. $p (REMOVE)"
+      fi
+      ((count++))
+    done
+    read choice
+    if [ $choice -eq 0 ] ; then      
+      break;
+    else
+      curr=${perfcounters[$choice]}
+      echo choice is $choice, curr is $curr, availPerfCounters[$choice] is ${availPerfCounters[$choice]}, availPerfCounters[1] is ${availPerfCounters[1]}
+      if [ ${#curr} -gt 0 ] ; then
+        perfcounters[$choice]=""
+      else
+        perfcounters[$choice]=${availPerfCounters[$choice]}
       fi
     fi
-    ((count++))
   done
-  echo ${availPerfCounters[@]}
+  PERFARGS=" "
+  MINUSE=" -e "
+  for p in ${perfcounters[@]}; do
+    if [ ${#p} -gt 0 ] ; then
+      PERFARGS=$PERFARGS$MINUSE$p
+    fi
+  done
+  echo $PERFARGS
 }
 
 function setRemoteIP {
@@ -67,7 +122,6 @@ function getPerfFromArgs {
   MINUSE=" -e "
   let count=0
   let countParms=0
-  declare -a perfcounters
   for var in "$@"
   do
     if [ $count -gt 1 ]; then
@@ -109,7 +163,7 @@ function runProgram {
       do
         if [ "$n" == "$perfcounter" ]; then
           # the current word is a perf counter name
-          # the preceding word was its value
+          # the previous word was its value
           res[localcounter]=${ll[$count-1]}
         fi
         ((localcounter++))
@@ -117,6 +171,7 @@ function runProgram {
     fi
     ((count++))
   done
+  echo "$PROGR($INSIZE) terminated"
   echo ${perfcounters[@]}
   echo ${res[@]}
 }
@@ -136,6 +191,7 @@ echo ""
 echo "currently remote IP is $REMOTE"
 echo "selected program is $PROGR"
 echo "input size is $INSIZE"
+printSelectedPerfCounters
 echo ""
 echo "1. run"
 echo "2. set program"
