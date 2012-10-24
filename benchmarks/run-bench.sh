@@ -8,13 +8,33 @@
 # $1 is the algo
 # $2 is the array size
 
-select FILENAME in *;
-do
-     echo "You picked $FILENAME ($REPLY), it is now only accessible to you."
-done
-
 PROGR=$1
 INSIZE=$2
+cd bin
+
+function selectCase {
+  echo "Select the program to measure:"
+  select FILENAME in *;
+  do
+     PROGR=$FILENAME
+     break
+  done
+}
+
+function selectInputSize {
+  echo "Select the input array size"
+  sizes="1024 4096 16384 65536 262144 1048576 4194304 16777216 67108864 268435456 1073741824"  
+  select CHOICE in $sizes;
+  do
+    INSIZE=$CHOICE
+    break
+  done
+}
+
+selectCase
+selectInputSize
+echo ciao
+
 PERFARGS=" "
 MINUSE=" -e "
 let count=0
