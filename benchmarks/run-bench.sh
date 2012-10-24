@@ -5,9 +5,9 @@
 #    exit $?
 #fi
 
-# create new experiment
 # $1 is the algo
 # $2 is the array size
+
 PROGR=$1
 INSIZE=$2
 PERFARGS=" "
@@ -25,7 +25,11 @@ do
     ((count++))
 done
 
+# create new experiment
+
+
 # call run (to start the ammeter)
+
 
 # run the program...
 perfout=`perf stat $PERFARGS ./$PROGR $INSIZE 2>&1`
