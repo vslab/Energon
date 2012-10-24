@@ -8,6 +8,11 @@
 # $1 is the algo
 # $2 is the array size
 
+select FILENAME in *;
+do
+     echo "You picked $FILENAME ($REPLY), it is now only accessible to you."
+done
+
 PROGR=$1
 INSIZE=$2
 PERFARGS=" "
