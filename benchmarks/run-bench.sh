@@ -35,17 +35,21 @@ function setPerformanceCounters {
   count=1
   declare -a res
   divisor=":"
+  skipnext="no"
   for w in ${ll[@]}; 
   do
     if [[ $w != "[Hardware" ]] && [[ $w != "event]" ]] ; then
       if [[ $w == "OR" ]] ; then
-        ((count--))
-        ((count--))
+        skipnext="yes"
       else
-        availPerfCounters[$count]=$w
-        echo $count: $w
+        if [[ $skipnext == "yes" ]] ; then
+          skipnext="no"
+        else
+          availPerfCounters[$count]=$w
+          echo $count: $w
+          ((count++))
+        fi
       fi
-    ((count++))
     fi
   done
 
@@ -161,10 +165,18 @@ function runProgram {
       localcounter=0
       for perfcounter in ${perfcounters[@]};
       do
+        echo checking $n against $perfcounter
         if [ "$n" == "$perfcounter" ]; then
+          echo is equal
           # the current word is a perf counter name
           # the previous word was its value
-          res[localcounter]=${ll[$count-1]}
+          v=${ll[$count-1]}
+          # assign it only if it' s a number
+          if [[ "$v" =~ ^([0-9]+(,)?)+([.][0-9]+)?$ ]] ; then
+            echo pref is number
+            res[localcounter]=$v
+            echo $localcounter: $v
+          fi
         fi
         ((localcounter++))
       done  
@@ -172,6 +184,7 @@ function runProgram {
     ((count++))
   done
   echo "$PROGR($INSIZE) terminated"
+  echo $perfout
   echo ${perfcounters[@]}
   echo ${res[@]}
 }
