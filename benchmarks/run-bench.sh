@@ -159,13 +159,17 @@ function getPerfFromArgs {
 # create new experiment
 function newCase {
   URL=$PROTOCOL$REMOTE$NEWCASE$DIVISOR$INSIZE
-  echo $URL
+  echo calling $URL
+  CURLRES=`curl $URL`
+  echo $CURLRES
 }
 
 # call run (to start the ammeter)
 function callRun {
   URL=$PROTOCOL$REMOTE$START
-  echo $URL
+  echo calling $URL
+  CURLRES=`curl $URL`
+  echo $CURLRES
 }
 
 # run the program...
@@ -226,7 +230,9 @@ function callStop {
   for w in ${res[@]}; do
     URL=$URL$DIVISOR$w
   done
-  echo $URL
+  echo calling $URL
+  CURLRES=`curl $URL`
+  echo $CURLRES
 }
 
 function experiment {
@@ -255,6 +261,7 @@ echo "------------------------------"
 echo "currently remote IP is $REMOTE"
 echo "selected program is $PROGR"
 echo "input size is $INSIZE"
+echo "will perform $ITER iterations"
 printSelectedPerfCounters
 echo ""
 echo "1. cycle run"
@@ -271,10 +278,15 @@ read choice
 case $choice in
 1) experiment ;;
 2)
+  i=0
   newCase
-  callRun
-  runProgram
-  callStop
+  while [ $i -lt $ITER ] ; do
+    callRun
+    runProgram
+    callStop
+    ((i++))
+    sleep 1
+  done
   ;;
 3) selectProgram ;;
 4) selectInputSize ;;
