@@ -26,6 +26,8 @@ declare -a availPerfCounters
 declare -A perfCountersAliases
 # active performance counters
 declare -a perfcounters
+# results
+declare -a res
 
 function printAvailablePerfCounters {
   echo "Available performance counters are: ${availPerfCounters[@]}"
@@ -62,6 +64,7 @@ function setPerformanceCounters {
       fi
     fi
   done
+  availPerfCounters[$count]="seconds"
 
   quit="no"
   while [ $quit != "yes" ]
@@ -99,7 +102,9 @@ function setPerformanceCounters {
   MINUSE=" -e "
   for p in ${perfcounters[@]}; do
     if [ ${#p} -gt 0 ] ; then
-      PERFARGS=$PERFARGS$MINUSE$p
+      if [ "$p" != "seconds" ] ; then
+        PERFARGS=$PERFARGS$MINUSE$p
+      fi
     fi
   done
   echo $PERFARGS
@@ -170,7 +175,6 @@ function runProgram {
   # parse the output of perf stat
   ll=($perfout)
   count=0
-  declare -a res
   divisor=":"
   for w in ${ll[@]}; 
   do 
@@ -218,7 +222,10 @@ function runProgram {
 
 # call stop (to stop the ammeter)
 function callStop {
-  URL=$PROTOCOL$REMOTE$STOP$DIVISOR$INSIZE
+  URL=$PROTOCOL$REMOTE$STOP
+  for w in ${res[@]}; do
+    URL=$URL$DIVISOR$w
+  done
   echo $URL
 }
 
