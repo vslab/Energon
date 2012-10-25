@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#if [ $EUID != 0 ]; then
-#    sudo "$0" "$@"
-#    exit $?
-#fi
+if [ $EUID != 0 ]; then
+    sudo "$0" "$@"
+    exit $?
+fi
 
 # $1 is the algo
 # $2 is the array size
@@ -17,6 +17,7 @@ cd bin
 
 # available performance counters
 declare -a availPerfCounters
+declare -A perfCountersAliases
 # active performance counters
 declare -a perfcounters
 
@@ -43,10 +44,13 @@ function setPerformanceCounters {
         skipnext="yes"
       else
         if [[ $skipnext == "yes" ]] ; then
+          # alias
+          prevCount=$count-1
+          alias=${availPerfCounters[$prevCount]}
+          perfCountersAliases[$alias]=$w
           skipnext="no"
         else
           availPerfCounters[$count]=$w
-          echo $count: $w
           ((count++))
         fi
       fi
@@ -78,7 +82,6 @@ function setPerformanceCounters {
       break;
     else
       curr=${perfcounters[$choice]}
-      echo choice is $choice, curr is $curr, availPerfCounters[$choice] is ${availPerfCounters[$choice]}, availPerfCounters[1] is ${availPerfCounters[1]}
       if [ ${#curr} -gt 0 ] ; then
         perfcounters[$choice]=""
       else
@@ -165,17 +168,26 @@ function runProgram {
       localcounter=0
       for perfcounter in ${perfcounters[@]};
       do
-        echo checking $n against $perfcounter
+        #echo checking $n against $perfcounter
         if [ "$n" == "$perfcounter" ]; then
-          echo is equal
           # the current word is a perf counter name
           # the previous word was its value
           v=${ll[$count-1]}
           # assign it only if it' s a number
           if [[ "$v" =~ ^([0-9]+(,)?)+([.][0-9]+)?$ ]] ; then
-            echo pref is number
             res[localcounter]=$v
-            echo $localcounter: $v
+          fi
+        else
+          # checking alias
+          aliasPerf=${perfCountersAliases[$perfcounter]}
+          if [ "$aliasPerf" == "$n" ]; then
+            # the current word is a perf counter name
+            # the previous word was its value
+            v=${ll[$count-1]}
+            # assign it only if it' s a number
+            if [[ "$v" =~ ^([0-9]+(,)?)+([.][0-9]+)?$ ]] ; then
+              res[localcounter]=$v
+            fi
           fi
         fi
         ((localcounter++))
@@ -184,7 +196,7 @@ function runProgram {
     ((count++))
   done
   echo "$PROGR($INSIZE) terminated"
-  echo $perfout
+  #echo $perfout
   echo ${perfcounters[@]}
   echo ${res[@]}
 }
