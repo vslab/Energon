@@ -11,7 +11,13 @@ fi
 PROGR=$1
 INSIZE=$2
 REMOTE=$3
+ITER=1
 PERFARGS=" "
+PROTOCOL="http://"
+NEWCASE="/Temporary_Listen_Addresses/case"
+START="/Temporary_Listen_Addresses/start"
+STOP="/Temporary_Listen_Addresses/stop"
+DIVISOR="/"
 
 cd bin
 
@@ -99,6 +105,11 @@ function setPerformanceCounters {
   echo $PERFARGS
 }
 
+function setIter {
+  echo "Set the number of iterations of every run (current value is $ITER)"
+  read ITER
+}
+
 function setRemoteIP {
   echo "Select the IP for the remote host (running the energon measurement framework)"
   read REMIP
@@ -141,13 +152,15 @@ function getPerfFromArgs {
 }
 
 # create new experiment
-function newExperiment {
-  echo "TODO: newExperiment"
+function newCase {
+  URL=$PROTOCOL$REMOTE$NEWCASE$DIVISOR$INSIZE
+  echo $URL
 }
 
 # call run (to start the ammeter)
 function callRun {
-  echo "TODO: callRun"
+  URL=$PROTOCOL$REMOTE$START
+  echo $URL
 }
 
 # run the program...
@@ -175,6 +188,7 @@ function runProgram {
           v=${ll[$count-1]}
           # assign it only if it' s a number
           if [[ "$v" =~ ^([0-9]+(,)?)+([.][0-9]+)?$ ]] ; then
+            v=`echo $v | sed s/,//g`
             res[localcounter]=$v
           fi
         else
@@ -186,6 +200,7 @@ function runProgram {
             v=${ll[$count-1]}
             # assign it only if it' s a number
             if [[ "$v" =~ ^([0-9]+(,)?)+([.][0-9]+)?$ ]] ; then
+              v=`echo $v | sed s/,//g`
               res[localcounter]=$v
             fi
           fi
@@ -203,7 +218,24 @@ function runProgram {
 
 # call stop (to stop the ammeter)
 function callStop {
-  echo "TODO: callStop"
+  URL=$PROTOCOL$REMOTE$STOP$DIVISOR$INSIZE
+  echo $URL
+}
+
+function experiment {
+  for m in 1 4 16 64 256 1024 ; do
+    i=0
+    INSIZE=$[m*1024*1024]
+    newCase
+    while [ $i -lt $ITER ] ; do
+      callRun
+      runProgram
+      callStop
+      ((i++))
+      sleep 1
+    done
+  done
+
 }
 
 clear
@@ -218,27 +250,31 @@ echo "selected program is $PROGR"
 echo "input size is $INSIZE"
 printSelectedPerfCounters
 echo ""
-echo "1. run"
-echo "2. set program"
-echo "3. set input size"
-echo "4. set remote host ip"
-echo "5. set performance counters"
-echo "6. exit"
+echo "1. cycle run"
+echo "2. single run"
+echo "3. set program"
+echo "4. set input size"
+echo "5. set remote host ip"
+echo "6. set performance counters"
+echo "7. set iter (number of iterations of every run)"
+echo "8. exit"
 echo -n "Your choice? : "
 read choice
 
 case $choice in
-1)
-  newExperiment
+1) experiment ;;
+2)
+  newCase
   callRun
   runProgram
   callStop
   ;;
-2) selectProgram ;;
-3) selectInputSize ;;
-4) setRemoteIP ;;
-5) setPerformanceCounters ;;
-6) quit="yes" ;;
+3) selectProgram ;;
+4) selectInputSize ;;
+5) setRemoteIP ;;
+6) setPerformanceCounters ;;
+7) setIter ;;
+8) quit="yes" ;;
 *) echo "\"$choice\" is not valid"
 esac
 done
