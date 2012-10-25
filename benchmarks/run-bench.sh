@@ -212,7 +212,7 @@ echo "This is the energon benchmark framework"
 quit="no"
 while [ $quit != "yes" ]
 do
-echo ""
+echo "------------------------------"
 echo "currently remote IP is $REMOTE"
 echo "selected program is $PROGR"
 echo "input size is $INSIZE"
