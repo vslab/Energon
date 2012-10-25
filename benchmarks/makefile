@@ -4,29 +4,31 @@ CC=g++
 # Hey!, I am comment number 2. I want to say that CFLAGS will be the
 # options I'll pass to the compiler.
 CFLAGS=-c -Wall
+SRC=src
+BIN=bin
 
 all: bubble heap insert merges quick selection
 
 #hello: main.o factorial.o hello.o
 #	$(CC) main.o factorial.o hello.o -o hello
 
-bubble: bubble.c
-	$(CC) bubble.c -o bubble
+bubble: $(SRC)/bubble.c
+	$(CC) $(SRC)/bubble.c -o $(BIN)/bubble
 
-heap: heap.c
-	$(CC) heap.c -o heap
+heap: $(SRC)/heap.c
+	$(CC) $(SRC)/heap.c -o $(BIN)/heap
 
-insert: insert.c
-	$(CC) insert.c -o insert
+insert: $(SRC)/insert.c
+	$(CC) $(SRC)/insert.c -o $(BIN)/insert
 
-merges: merges.c
-	$(CC) merges.c -o merges
+merges: $(SRC)/merges.c
+	$(CC) $(SRC)/merges.c -o $(BIN)/merges
 
-quick: quick.c
-	$(CC) quick.c -o quick
+quick: $(SRC)/quick.c
+	$(CC) $(SRC)/quick.c -o $(BIN)/quick
 
-selection: selection.c
-	$(CC) selection.c -o selection
+selection: $(SRC)/selection.c
+	$(CC) $(SRC)/selection.c -o $(BIN)/selection
 
 clean:
 	rm -rf *o bubble heap insert merges quick selection 
