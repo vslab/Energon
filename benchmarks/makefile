@@ -7,7 +7,7 @@ CFLAGS=-c -Wall
 SRC=src
 BIN=bin
 
-all: bubble heap insert merges quick selection
+all: bubble heap insert merges quick selection memtester MemoryTester
 
 #hello: main.o factorial.o hello.o
 #	$(CC) main.o factorial.o hello.o -o hello
@@ -29,6 +29,12 @@ quick: $(SRC)/quick.c
 
 selection: $(SRC)/selection.c
 	$(CC) $(SRC)/selection.c -o $(BIN)/selection
+
+memtester: $(SRC)/memtester.c
+	gcc $(SRC)/memtester.c -o $(BIN)/memtester
+
+MemoryTester: $(SRC)/MemoryTester.c
+	gcc $(SRC)/MemoryTester.c -o $(BIN)/MemoryTester
 
 clean:
 	rm -rf *o bubble heap insert merges quick selection 
