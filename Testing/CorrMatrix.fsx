@@ -136,52 +136,21 @@ db.ExperimentCases.Where(fun (x:ExperimentCases) ->
         ).ToArray()
 
 
-let createMatrix alg mode memoryIN memoryOUT =
-    let exp = match alg with
-      | "convolution" -> db.Experiments.Where(fun (x:Experiments) -> x.Id = 4)
-      | "saxpy" -> db.Experiments.Where(fun (x:Experiments) -> x.Id = 22)
-      | "reduce" -> db.Experiments.Where(fun (x:Experiments) -> x.Id = 29)
-      | "test" -> db.Experiments.Where(fun (x:Experiments) -> x.Id = 13)
 
-    let expCases = match (alg,mode) with
-      | "test", "DGPU" -> db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
-        if x.Experiment_id = 13 then
+let createMatrix alg mode memoryIN memoryOUT expID =
+    let exp = db.Experiments.Where(fun (x:Experiments) -> x.Id = expID)
+
+    let expCases = 
+      match (alg,mode) with 
+      | "convolution", "DGPU" -> db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
+        if x.Experiment_id = expID then
             let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
             let mode = args.[0]
-            let ndev = args.[5]
-            let dev = args.[6]
-            let memin = args.[7]
-            let memout = args.[8]
-            if mode = "DEVICE" && ndev = "1" && dev = "0" &&  memin.Contains(memoryIN) && memout.Contains(memoryOUT) then
-                true
-            else
-                false
-        else
-            false    
-        )
-      | "test", "IGX" -> db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
-        if x.Experiment_id = 13 then
-            let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
-            let mode = args.[0]
-            let ndev = args.[5]
-            let dev = args.[6]
-            let memin = args.[7]
-            let memout = args.[8]
-            if mode = "DEVICE" && ndev = "1" && dev = "1" &&  memin.Contains(memoryIN) && memout.Contains(memoryOUT) then
-                true
-            else
-                false
-        else
-            false    
-        )      | "convolution", "DGPU" -> db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
-        if x.Experiment_id = 4 then
-            let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
-            let mode = args.[0]
-            let ndev = args.[6]
-            let dev = args.[7]
-            let memin = args.[8]
-            let memout = args.[9]
-            if mode = "DEVICE" && ndev = "1" && dev = "0" && memin.Contains(memoryIN) && memout.Contains(memoryOUT) then
+            let ndev = args.[4]
+            let dev = args.[5]
+            let memin = args.[6]
+            let memout = args.[7]
+            if mode = "DEVICE" && ndev = "1" && dev = "Cypress" && memin.Contains(memoryIN) && memout.Contains(memoryOUT) then
                 true
             else
                 false
@@ -189,14 +158,14 @@ let createMatrix alg mode memoryIN memoryOUT =
             false    
         )
       | "convolution", "IGX" -> db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
-        if x.Experiment_id = 4 then
+        if x.Experiment_id = expID then
             let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
             let mode = args.[0]
-            let ndev = args.[6]
-            let dev = args.[7]
-            let memin = args.[8]
-            let memout = args.[9]
-            if mode = "DEVICE" && ndev = "1" && dev = "1" &&  memin.Contains(memoryIN) && memout.Contains(memoryOUT) then
+            let ndev = args.[4]
+            let dev = args.[5]
+            let memin = args.[6]
+            let memout = args.[7]
+            if mode = "DEVICE" && ndev = "1" && dev = "BeaverCreek" &&  memin.Contains(memoryIN) && memout.Contains(memoryOUT) then
                 true
             else
                 false
@@ -204,7 +173,7 @@ let createMatrix alg mode memoryIN memoryOUT =
             false
         )
       | "saxpy", "DGPU" -> db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
-        if x.Experiment_id = 22 then
+        if x.Experiment_id = expID then
             let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
             let mode = args.[0]
             let ndev = args.[4]
@@ -219,7 +188,7 @@ let createMatrix alg mode memoryIN memoryOUT =
             false    
         )
       | "saxpy", "IGX" -> db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
-        if x.Experiment_id = 22 then
+        if x.Experiment_id = expID then
             let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
             let mode = args.[0]
             let ndev = args.[4]
@@ -234,7 +203,7 @@ let createMatrix alg mode memoryIN memoryOUT =
             false
         )
       | "reduce", "DGPU" -> db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
-        if x.Experiment_id = 29 then
+        if x.Experiment_id = expID then
             let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
             let mode = args.[0]
             let ndev = args.[4]
@@ -249,7 +218,7 @@ let createMatrix alg mode memoryIN memoryOUT =
             false    
         )
       | "reduce", "IGX" -> db.ExperimentCases.Where(fun (x:ExperimentCases) -> 
-        if x.Experiment_id = 29 then
+        if x.Experiment_id = expID then
             let args = x.Args.Split([| ";" |], StringSplitOptions.RemoveEmptyEntries)
             let mode = args.[0]
             let ndev = args.[4]
@@ -289,12 +258,12 @@ let createMatrix alg mode memoryIN memoryOUT =
                         | "HOST" -> 0.
                         | "DEVICE" -> 1.
                         | _ -> -1.
-        let memArg a = if a = "DEVICE COPY" then 0.
-                       else 
-                            if a = "CL_MEM_ALLOC_HOST_PTR" then 1.
-                            else 
-                                if a = "CL_MEM_USE_PERSISTENT_MEM_AMD" then 2.
-                                else -1.0
+        let memArg (a:System.String) = if a.StartsWith("DEVICE COPY") then 0.
+                                       else 
+                                            if a.StartsWith("CL_MEM_ALLOC_HOST_PTR") then 1.
+                                            else 
+                                                if a.StartsWith("CL_MEM_USE_PERSISTENT_MEM_AMD") then 2.
+                                                else -1.0
         let argsToFloatSeq = seq {
                 yield firstArg
                 yield float(System.Single.Parse(args.[1]))
@@ -320,7 +289,7 @@ let createMatrix alg mode memoryIN memoryOUT =
                 "ldsFetchInst" ; "ldsWriteInst" ; "aluStalledByLds" ; "ldsBankConfl" ; "fastPath" ; "completePath" ; "pathUtil" |]
 
         let valSeq = seq {
-                yield valArray.[0]
+                yield valArray.[0] //completion time
                 for it in 0..2 do
                     for n in 0..(names.Length - 1) do
                         let thisv = valArray.[1+it*(names.Length)+n]
@@ -357,7 +326,9 @@ let createMatrix alg mode memoryIN memoryOUT =
         let sensorsNames = (Seq.map sensorName sensors).ToArray()
         Array.concat [| args ; sensorsNames ; [|"J"; "vector_size"|] |]
 
-    let names = colNames (exp.First()) (expCases.First()) (Seq.head (expRuns (expCases.First())))
+    let firsExp = exp.First()
+    let firstCase = expCases.First()
+    let names = colNames firsExp firstCase (Seq.head (expRuns (firstCase)))
 
     let cols = names.Count()
 
@@ -448,12 +419,12 @@ let createMatrix alg mode memoryIN memoryOUT =
 //DEVICE;16777216;103;0;3;Cypress; CL_MEM_USE_PERSISTENT_MEM_AMD ; CL_MEM_ALLOC_HOST_PTR ;BeaverCreek;CL_MEM_USE_PERSISTENT_MEM_AMD;CL_MEM_ALLOC_HOST_PTR;AMD_A8_3800_APU_with_Radeon_tm__HD_Graphics;CL_MEM_USE_PERSISTENT_MEM_AMD;CL_MEM_ALLOC_HOST_PTR;
 //DEVICE;4194304;455;0;3;Cypress;CL_MEM_ALLOC_HOST_PTR;CL_MEM_ALLOC_HOST_PTR;BeaverCreek;CL_MEM_ALLOC_HOST_PTR;CL_MEM_ALLOC_HOST_PTR;AMD_A8_3800_APU_with_Radeon_tm__HD_Graphics;CL_MEM_ALLOC_HOST_PTR;CL_MEM_ALLOC_HOST_PTR;
 // DEVICE;67108864;31;0;3;Cypress;DEVICE COPY;DEVICE COPY;BeaverCreek;DEVICE COPY;DEVICE COPY;AMD_A8_3800_APU_with_Radeon_tm__HD_Graphics;DEVICE COPY;DEVICE COPY;
-createMatrix "reduce" "IGX" "DEVICE COPY" "DEVICE COPY"
-createMatrix "reduce" "IGX" "CL_MEM_ALLOC_HOST_PTR" "CL_MEM_ALLOC_HOST_PTR"
-createMatrix "reduce" "IGX" "CL_MEM_USE_PERSISTENT_MEM_AMD" "CL_MEM_ALLOC_HOST_PTR"
-createMatrix "reduce" "DGPU" "DEVICE COPY" "DEVICE COPY"
-createMatrix "reduce" "DGPU" "CL_MEM_ALLOC_HOST_PTR" "CL_MEM_ALLOC_HOST_PTR"
-createMatrix "reduce" "DGPU" "CL_MEM_USE_PERSISTENT_MEM_AMD" "CL_MEM_ALLOC_HOST_PTR"
+createMatrix "convolution" "IGX" "DEVICE COPY" "DEVICE COPY" 32
+createMatrix "convolution" "IGX" "CL_MEM_ALLOC_HOST_PTR" "CL_MEM_ALLOC_HOST_PTR" 32
+createMatrix "convolution" "IGX" "CL_MEM_USE_PERSISTENT_MEM_AMD" "CL_MEM_ALLOC_HOST_PTR" 32
+createMatrix "convolution" "DGPU" "DEVICE COPY" "DEVICE COPY" 32
+createMatrix "convolution" "DGPU" "CL_MEM_ALLOC_HOST_PTR" "CL_MEM_ALLOC_HOST_PTR" 32
+createMatrix "convolution" "DGPU" "CL_MEM_USE_PERSISTENT_MEM_AMD" "CL_MEM_ALLOC_HOST_PTR" 32
 
 createMatrix "saxpy" "IGX" "0" "0"
 

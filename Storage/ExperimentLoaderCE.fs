@@ -1,4 +1,4 @@
-﻿module Energon.Storage.Loader
+﻿module Energon.Storage.LoaderCE
 
 open System
 open Microsoft.FSharp.Data.TypeProviders
@@ -10,26 +10,22 @@ open System.Data.SqlServerCe;
 open Energon.Measuring
 open Energon.Measuring.Database
 open System.Text
+open Energon.SQLCE
 open System.Collections.Generic
-open SQLExpress
 
 
-let ExperimentLoader(expID:int, server:string, database:string) =
-    let getConStr = 
-        //let conStr = System.String.Format("server='{0}';database='{1}';User Id='{2}';password='{3}';", server, database, user, password) in
-        let conStr = System.String.Format("Data Source={0};Initial Catalog={1};Integrated Security=SSPI;", server, database) in
+let ExperimentLoaderCE(expID:int, file:string) =
+    let getConStr file = 
+        let conStr = "Data Source=" + file + ";" in
         conStr;
 
-    let GetLinqContext = 
-        let context = new SQLExpress.Measure(getConStr)
+    let GetLinqContext file = 
+        let context = new Measurements(getConStr file)
         if (context.DatabaseExists() = false) then
              context.CreateDatabase()
         context
-
-    let db = 
-        let context = GetLinqContext
-        context.Connection.Open()
-        context
+    
+    let db = GetLinqContext file
     
     let dbExperiment = db.Experiments.Where(fun (x:Experiments) -> x.Id = expID).First()
     let dbCases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = expID)
