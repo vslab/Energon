@@ -162,7 +162,12 @@ function getPerfFromArgs {
 
 # create new experiment
 function newCase {
-  URL=$PROTOCOL$REMOTE$NEWCASE$DIVISOR$INSIZE
+  if [ ${#INSIZE} -gt 0 ] ; then
+    URL=$PROTOCOL$REMOTE$NEWCASE$DIVISOR$INSIZE
+  else
+    INSIZTMP=0
+    URL=$PROTOCOL$REMOTE$NEWCASE$DIVISOR$INSIZTMP
+  fi
   echo calling $URL
   CURLRES=`curl $URL`
   echo $CURLRES
@@ -230,7 +235,7 @@ function parseOutput {
 
 # run the program...
 function runProgram {
-  echo "running perf stat $PERFARGS ./$PROGR $INSIZE ..."
+  echo "running perf stat $PERFARGS $PROGR $INSIZE ..."
   perfout=`perf stat $PERFARGS $PROGR $INSIZE 2>&1`
   # parse the output of perf stat
   parseOutput
