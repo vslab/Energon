@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $EUID != 0 ]; then
-    sudo "$0" "$@"
+    sudo -E "$0" "$@"
     exit $?
 fi
 
@@ -19,6 +19,7 @@ START="/Temporary_Listen_Addresses/start"
 STOP="/Temporary_Listen_Addresses/stop"
 DIVISOR="/"
 
+STARTDIR=`pwd`
 cd bin
 
 # available performance counters
@@ -28,6 +29,7 @@ declare -A perfCountersAliases
 declare -a perfcounters
 # results
 declare -a res
+
 
 function printAvailablePerfCounters {
   echo "Available performance counters are: ${availPerfCounters[@]}"
@@ -123,9 +125,11 @@ function setRemoteIP {
 
 function selectProgram {
   echo "Select the program to measure:"
+  cd $STARTDIR
+  cd bin
   select FILENAME in *;
   do
-     PROGR=$FILENAME
+     PROGR=./$FILENAME
      break
   done
 }
@@ -172,10 +176,10 @@ function callRun {
   echo $CURLRES
 }
 
+perfout=""
+
 # run the program...
-function runProgram {
-  echo "running $PROGR($INSIZE)..."
-  perfout=`perf stat $PERFARGS ./$PROGR $INSIZE 2>&1`
+function parseOutput {
   # parse the output of perf stat
   ll=($perfout)
   count=0
@@ -224,6 +228,50 @@ function runProgram {
   echo ${res[@]}
 }
 
+# run the program...
+function runProgram {
+  echo "running perf stat $PERFARGS ./$PROGR $INSIZE ..."
+  perfout=`perf stat $PERFARGS $PROGR $INSIZE 2>&1`
+  # parse the output of perf stat
+  parseOutput
+  echo "$PROGR $INSIZE terminated"
+  #echo $perfout
+  echo ${perfcounters[@]}
+  echo ${res[@]}
+}
+
+
+SPECPROGRAM="401.bzip2"
+SPECRUNFOLDER="run_base_ref_gcc43-32bit.0000"
+
+function setSPECCPUVars {
+  clear
+  echo "run SPEC CPU 2006 once, so all the folder will be setup"
+  echo current SPEC folder is $SPEC
+  echo the runfolder is $SPECRUNFOLDER
+  echo "enter the new runfolder (leave empty to use the current value)"
+  read newspecfolder
+  if [ ${#newspecfolder} -gt 0 ] ; then
+    SPECRUNFOLDER=$newspecfolder
+  fi 
+}
+
+function selectSPECCPU {
+  echo "select the SPEC CPU program to run (current is $SPECPROGRAM)"
+  echo $SPEC
+  echo $SPEC/benchspec/CPU2006
+  select CHOICE in `find $SPEC/benchspec/CPU2006 -maxdepth 1 -mindepth 1 -exec basename {} \; -type d`;
+  do
+    SPECPROGRAM=$CHOICE
+    break
+  done
+  SPECINVOKE=$SPEC/bin/specinvoke
+  SPECFOLDER=$SPEC/benchspec/CPU2006/$SPECPROGRAM/run/$SPECRUNFOLDER
+  SPECCOMMAND="$SPECINVOKE -d $SPECFOLDER -e /dev/null -o /dev/null -f speccmds.cmd -C -q" 
+  PROGR=$SPECCOMMAND
+  INSIZE=""
+}
+
 # call stop (to stop the ammeter)
 function callStop {
   URL=$PROTOCOL$REMOTE$STOP
@@ -267,11 +315,12 @@ echo ""
 echo "1. cycle run"
 echo "2. single run"
 echo "3. set program"
-echo "4. set input size"
-echo "5. set remote host ip"
-echo "6. set performance counters"
-echo "7. set iter (number of iterations of every run)"
-echo "8. exit"
+echo "4. set SPEC CPU program"
+echo "5. set input size"
+echo "6. set remote host ip"
+echo "7. set performance counters"
+echo "8. set iter (number of iterations of every run)"
+echo "9. exit"
 echo -n "Your choice? : "
 read choice
 
@@ -289,11 +338,12 @@ case $choice in
   done
   ;;
 3) selectProgram ;;
-4) selectInputSize ;;
-5) setRemoteIP ;;
-6) setPerformanceCounters ;;
-7) setIter ;;
-8) quit="yes" ;;
+4) selectSPECCPU ;;
+5) selectInputSize ;;
+6) setRemoteIP ;;
+7) setPerformanceCounters ;;
+8) setIter ;;
+9) quit="yes" ;;
 *) echo "\"$choice\" is not valid"
 esac
 done
