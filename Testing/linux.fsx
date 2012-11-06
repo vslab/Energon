@@ -3,43 +3,6 @@
 #r @"Energon.Measuring.dll"
 open Energon.Measuring
 
-(*
-// a couple of sensors...
-let proc = new PerfCounter("Process", "% Processor Time", 1.)
-proc.Instance <- "FSI"
-let proc2 = new PerfCounter("Process", "% User Time", 1.)
-proc2.Instance <- "FSI"
-let proc3 = new PerfCounter("IPv4", "Datagrams/sec", 1.)
-
-// something that uses CPU/mem
-let rec fib(n) = 
-    match n with
-    | 0 -> 0
-    | 1 -> 1
-    | x -> fib (x-1) + fib (x-2)
-
-
-let load(s:seq<obj>) = 
-    let n_o = Seq.head s
-    let n = n_o :?> int
-    printfn "fib(%d)=%d" (n) (fib(n))
-
-
-//define an exepriment
-let args = seq {
-        for i in 40..42 -> 
-            seq {
-                yield i :> obj
-            }
-    }
-
-*)
-
-(*
-let e = new Experiment("fibonacci 40..42", [| proc; proc2; proc3 |], 3, [|"n"|], args, load)
-e.Run(true)
-e.Results
-*)
 
 #r @"Energon.Storage.dll"
 //#r @"C:\Users\Davide\Desktop\Projects\Energon\Storage\bin\Debug\Energon.Measurement.dll"
@@ -94,12 +57,6 @@ extechWatt.Stop()
 //let sensors = [| new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 let sensors = [| extechWatt :> GenericSensor; new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 
-(*
-extechPF.Close()
-extechAmp.Close()
-extechWatt.Close()
-extechV.Close()
-*)
 // declare a remote sensor
 
 //let sensors = [|extechAmp :> GenericSensor; extechWatt :> GenericSensor; extechPF :> GenericSensor; extechV :> GenericSensor; r1 :> GenericSensor |]
@@ -111,6 +68,7 @@ let e = new Experiment("merges_linux", sensors, 0, [| "size" |], [||], fun _ -> 
 let e = new Experiment("heap_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("memtester_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
+// CPU SPEC
 let e = new Experiment("401.bzip2_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("435.gromacs_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("445.gobmk_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
@@ -119,6 +77,22 @@ let e = new Experiment("410.bwaves_linux", sensors, 0, [| "size" |], [||], fun _
 let e = new Experiment("454.calculix_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("429.mcf_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("464.h264ref_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("458.sjeng_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("471.omnetpp_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("434.zeusmp_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("453.povray_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("436.cactusADM_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("465.tonto_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("483.xalancbmk_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("462.libquantum_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("470.lbm_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("437.leslie3d_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("433.milc_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("450.soplex_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("403.gcc_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("482.sphinx3_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("456.hmmer_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("416.gamess_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 // db helper
 let saver = new Energon.Storage.ExperimentRuntimeSaverExpress(e, "HPLAB\SQLEXPRESS", "Measure" )
