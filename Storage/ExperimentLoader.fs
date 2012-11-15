@@ -14,23 +14,39 @@ open System.Collections.Generic
 open SQLExpress
 
 
-let ExperimentLoader(expID:int, server:string, database:string) =
+let ExperimentList(server:string, database:string) =
     let getConStr = 
         //let conStr = System.String.Format("server='{0}';database='{1}';User Id='{2}';password='{3}';", server, database, user, password) in
         let conStr = System.String.Format("Data Source={0};Initial Catalog={1};Integrated Security=SSPI;", server, database) in
-        conStr;
-
+        conStr
     let GetLinqContext = 
         let context = new SQLExpress.Measure(getConStr)
         if (context.DatabaseExists() = false) then
              context.CreateDatabase()
         context
-
     let db = 
         let context = GetLinqContext
         context.Connection.Open()
         context
-    
+    db.Experiments.Where(fun (x:Experiments) -> true) |> Seq.map (fun (e:SQLExpress.Experiments) -> (e.Id, e.Name) )
+
+
+
+
+let ExperimentLoader(expID:int, server:string, database:string) =
+    let getConStr = 
+        //let conStr = System.String.Format("server='{0}';database='{1}';User Id='{2}';password='{3}';", server, database, user, password) in
+        let conStr = System.String.Format("Data Source={0};Initial Catalog={1};Integrated Security=SSPI;", server, database) in
+        conStr;
+    let GetLinqContext = 
+        let context = new SQLExpress.Measure(getConStr)
+        if (context.DatabaseExists() = false) then
+             context.CreateDatabase()
+        context
+    let db = 
+        let context = GetLinqContext
+        context.Connection.Open()
+        context
     let dbExperiment = db.Experiments.Where(fun (x:Experiments) -> x.Id = expID).First()
     let dbCases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = expID)
     let runsOfCase (case:ExperimentCases) =
@@ -51,16 +67,13 @@ let ExperimentLoader(expID:int, server:string, database:string) =
             newSens
         else
             sens.First()
-
     let sensorToSensorClass (s:Sensors) =
         db.SensorClasses.Where(fun (x:SensorClasses) -> x.Id = s.Sensor_class_id).First()
-
     let runseqseq = Seq.map runsOfCase dbCases 
     let runseq2senseqseq (runseq:seq<ExperimentRuns>) =
         runseq |> Seq.map (fun (x:ExperimentRuns) ->
                 sensorsOfRun x
             )
-
     let handleSensors (s:Sensors) =
         let sensRes = sensors.Where(fun (x:DatabaseSensor) -> x.ID = s.Sensor_class_id)
         if (sensRes.Count() = 0) then
@@ -68,7 +81,6 @@ let ExperimentLoader(expID:int, server:string, database:string) =
             let newSens = new DatabaseSensor(cl.SensorName)
             newSens.ID <- cl.Id
             sensors.Add(newSens)
-
     runseqseq |> Seq.iter (fun (runseq:seq<ExperimentRuns>) -> 
             let sensseqseq = runseq2senseqseq runseq
             sensseqseq |> Seq.iter ( fun (sensseq:seq<Sensors>) -> 
@@ -88,10 +100,15 @@ let ExperimentLoader(expID:int, server:string, database:string) =
             dbRuns |> Seq.iter ( fun (r:ExperimentRuns) ->
                 let run = new DatabaseExperimentRun(sensorSeq)
                 c.ExperimentRuns.Add(run)
-
             )
         )
 
+    exp
+
     
+
+
+
+
 
 

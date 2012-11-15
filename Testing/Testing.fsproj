@@ -39,6 +39,7 @@
     <None Include="CorrMatrix.fsx" />
     <None Include="Script.fsx" />
     <None Include="Analysis.fsx" />
+    <None Include="linux.fsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Extech\Extech.fsproj">

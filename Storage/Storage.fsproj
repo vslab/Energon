@@ -72,11 +72,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="ExperimentRuntimeSaverCE.fs" />
-    <Compile Include="ExperimentLoader.fs" />
     <None Include="System.Data.SqlServerCe.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="ExperimentRuntimeSaverExpress.fs" />
+    <Compile Include="ExperimentLoaderCE.fs" />
+    <Compile Include="ExperimentLoader.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Measuring\Measuring.fsproj">

@@ -49,9 +49,9 @@ open Energon.Extech380803
 let extechWatt = new Energon.Extech380803.Extech380803Sensor("extechWatt", DataType.Watt, 1.0)
 //let extechPF = new Energon.Extech380803.Extech380803Sensor("extechPF", DataType.PowerFactor, 1.0)
 //let extechV = new Energon.Extech380803.Extech380803Sensor("extechV", DataType.Volt, 1.0)
-extechWatt.Start()
-extechWatt.CurrValue()
-extechWatt.Stop()
+//extechWatt.Start()
+//extechWatt.CurrValue()
+//extechWatt.Stop()
 
 //let sensors = [| extechWatt :> GenericSensor ; new RemoteSensor("test", DataType.Unknown) :> GenericSensor; new RemoteSensor("test", DataType.Unknown) :> GenericSensor|]
 //let sensors = [| new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
@@ -69,12 +69,13 @@ let e = new Experiment("heap_linux", sensors, 0, [| "size" |], [||], fun _ -> ()
 let e = new Experiment("memtester_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 // CPU SPEC
-let e = new Experiment("401.bzip2_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("435.gromacs_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("445.gobmk_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("444.namd_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("410.bwaves_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("454.calculix_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("401.bzip2_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("435.gromacs_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("445.gobmk_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("444.namd_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("410.bwaves_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("454.calculix_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+
 let e = new Experiment("429.mcf_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("464.h264ref_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("458.sjeng_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
@@ -93,17 +94,57 @@ let e = new Experiment("403.gcc_linux", sensors, 0, [| "size" |], [||], fun _ ->
 let e = new Experiment("482.sphinx3_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("456.hmmer_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("416.gamess_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("999.specrand_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("447.dealII_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("473.astar_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("400.perlbench_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("481.wrf_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("459.gemsFDTD_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("998.specrand_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 // db helper
-let saver = new Energon.Storage.ExperimentRuntimeSaverExpress(e, "HPLAB\SQLEXPRESS", "Measure" )
+let server = "HPLAB\SQLEXPRESS"
+let dbname = "Measure"
+let saver = new Energon.Storage.ExperimentRuntimeSaverExpress(e, server, dbname )
 
 
 // the helper makes easy to handle remote loads and remote sensors
 let helper = new RemoteExperimentHelper(e)
-helper.Start()
-
+           
 helper.Stop()
 
+                                                                                                                                                                                                                                                                                                                                                                                            
+
+
+let database = dbname
+let getConStr = 
+    //let conStr = System.String.Format("server='{0}';database='{1}';User Id='{2}';password='{3}';", server, database, user, password) in
+    let conStr = System.String.Format("Data Source={0};Initial Catalog={1};Integrated Security=SSPI;", server, database) in
+    conStr
+let GetLinqContext = 
+    let context = new SQLExpress.Measure(getConStr)
+    if (context.DatabaseExists() = false) then
+            context.CreateDatabase()
+    context
+let db = 
+    let context = GetLinqContext
+    context.Connection.Open()
+    context
+
+let expId = 50
+
+let exp = db.Experiments.Where(fun (e:SQLExpress.Experiments) -> e.Id = expId ).First()
+let cases = db.ExperimentCases.Where(fun (c:SQLExpress.ExperimentCases) -> c.Experiment_id = exp.Id) |> Seq.toList
+let runs = db.ExperimentRuns.Where(fun (r:SQLExpress.ExperimentRuns) -> cases |> Seq.exists (fun (c:SQLExpress.ExperimentCases) -> c.Id = r.Experiment_case_id) ) |> Seq.toList
+let sensors = db.Sensors.Where(fun (s:SQLExpress.Sensors) -> runs |> Seq.exists (fun (r:SQLExpress.ExperimentRuns) -> s.Experiment_run_id = r.Id ))
+let used_classes = sensors |> 
+    Seq.map (fun (s:SQLExpress.Sensors) -> db.SensorClasses.Where(fun (c:SQLExpress.SensorClasses) -> s.Sensor_class_id = c.Id ).First().Id ) |> 
+    Set.ofSeq |> Set.toList |> List.map (fun id -> db.SensorClasses.Where(fun (c:SQLExpress.SensorClasses) -> c.Id = id ).First())
+
+used_classes |> List.iter (fun (c:SQLExpress.SensorClasses) -> System.Console.WriteLine(c.SensorName) )
+
+
+sensors.Count()
 
 
 
@@ -113,133 +154,18 @@ helper.Stop()
 
 
 
+let exp_id = 0
+Energon.Storage.Loader.ExperimentList
+let list_all = Energon.Storage.Loader.ExperimentList(server, dbname)
+let list_linux32 = list |> Seq.filter (fun (e:SQLExpress.Experiments) -> e.Name.EndsWith("linux")) |> Seq.map (fun (e:SQLExpress.Experiments) -> (e.Id, e.Name) )
+let list_cpuspec32 = list |> Seq.filter (fun (e:SQLExpress.Experiments) -> e.Name.Contains("cpuspec")) |> Seq.map (fun (e:SQLExpress.Experiments) -> (e.Id, e.Name) )
+list2 |> Seq.map (fun (id,name) -> System.Console.WriteLine(name) )
 
 
 
+let l = Energon.Storage.Loader.ExperimentLoader(32, server, dbname)
+l.ExperimentCases.First().Runs
 
-
-
-
-
-
-
-
-
-let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.sdf"
-
-// ------ remote experiment
-
-//let extechAmp = new Energon.Extech380803.Extech380803Sensor("extechAmp", DataType.Ampere, 1.0)
-let extechWatt = new Energon.Extech380803.Extech380803Sensor("extechWatt", DataType.Watt, 1.0)
-//let extechPF = new Energon.Extech380803.Extech380803Sensor("extechPF", DataType.PowerFactor, 1.0)
-//let extechV = new Energon.Extech380803.Extech380803Sensor("extechV", DataType.Volt, 1.0)
-(*
-extechPF.Close()
-extechAmp.Close()
-extechWatt.Close()
-extechV.Close()
-*)
-let name1 = "completionTime"
-let names = [|  "gpuBusy" ; "aluInsts" ; "fetchInsts" ; "wrInsts" ; "waveFronts" ; "AluBusy" ; "aluFetchRatio" ; 
-            "aluPacking" ; "aluPacking" ; "fetchUnitBusy" ; "fetchUnitStalled" ; "fetchSize" ; "cacheHit" ; "writeUnitStalled" ; 
-            "ldsFetchInst" ; "aluStalledByLds" ; "ldsBankConfl" ; "fastPath" ; "completePath" ; "pathUtil" |]
-let allNames = seq{
-    yield name1
-    let n1 = Seq.map (fun (s:string) -> System.String.Format( "{0}_1", s)) names |> Seq.toArray
-    for i in n1 do
-        yield i
-    let n2 = Seq.map (fun (s:string) -> System.String.Format( "{0}_2", s)) names |> Seq.toArray
-    for i in n2 do
-        yield i
-    let n3 = Seq.map (fun (s:string) -> System.String.Format( "{0}_3", s)) names |> Seq.toArray
-    for i in n3 do
-        yield i
-    }
-let sensors = seq {
-        yield extechWatt :> GenericSensor
-        let namesArray = Seq.toArray allNames
-        for n in namesArray do
-            yield new RemoteSensor(n, DataType.Unknown) :> GenericSensor
-    }
-let sensorsList = sensors.ToArray()
-
-// declare an experiment
-let e = new Experiment("saxpy_openCL", sensorsList, 0, [| "mode"; "vector_size"; "samples"; "use_float_4"; "n_thread_host"; "n_device"; "d0_size"; "d0_mode_in"; "d0_mode_out"; "d1_size"; "d1_mode_in"; "d1_mode_out"; "d2_size"; "d2_mode_in"; "d2_mode_out" |], [||], fun _ -> ())
-// db helper
-let saver = new Energon.Storage.ExperimentRuntimeSaver(e, dbfile)
-
-// the helper makes easy to handle remote loads and remote sensors
-let helper = new RemoteExperimentHelper(e)
-helper.Start()
-
-
-helper.Stop()
-
-
-
-
-
-
-
-
-
-
-
-
-// a remote process starter (this should be run on the remote machine)
-let remote = new RemoteSensorHelper("127.0.0.1")
-remote.experimentCase([| "2"; "1"; "1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1";"1"; |]) // a new experiment case with its params
-
-remote.start() // experiment starting
-// experiment run, I have to send remote sensors values, in the same order as we declared the sensors
-remote.stop([| "0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0";"0"; |])  
-
-
-let remote = new RemoteSensorHelper("127.0.0.1")
-remote.experimentCase([| "1" |]) // a new experiment case with its params
-
-remote.start() // experiment starting
-// experiment run, I have to send remote sensors values, in the same order as we declared the sensors
-remote.stop([| "0" ; "1" |])  
-
-
-
-e.Cases.Count
-let case = e.Cases.Item 0
-case
-let run = case.Runs.Item 0
-run
-
-
-let start() =
-    printf "start\n"
-let stop() =
-    printf "stop\n"
-
-let w = new webListener(start, stop)
-w.start()
-w.stop()
-
-//let db = new Energon.Measurement.Measurements(dbfile)
-let db = saver.LinqContext
-db.Experiments
-let measurements = db.Measurements1
-let sel = measurements.First(fun (m:Energon.SQLCE.Measurements1) -> m.Sensor_id = 205)
-sel
-measurements.DeleteOnSubmit(sel)
-db.SubmitChanges()
-
-let exp = db.Experiments.Where(fun (x:Experiments) -> x.Name.StartsWith("fibonacci")).First()
-printf "%s\n" exp.Name
-let cases = db.ExperimentCases.Where(fun (x:ExperimentCases) -> x.Experiment_id = exp.Id)
-let printCase (c:ExperimentCases) =
-    printf "%s=%s" exp.ArgNames c.Args
-    let runs = db.ExperimentRuns.Where(fun (r:ExperimentRuns) -> r.Experiment_case_id = c.Id)
-
-let db2 = Energon.CompactSQL.GetLinqContext dbfile
-db
-
-#quit;;
 
 
 
