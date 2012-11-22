@@ -99,8 +99,8 @@ let e = new Experiment("998.specrand_linux64", sensors, 0, [| "size" |], [||], f
 
 
 let e = new Experiment("quick_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
-// fatto fin qui
-let e = new Experiment("merges_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("merges_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+
 let e = new Experiment("heap_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("memtester_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
