@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <stdio.h>
   
-#define uint32 unsigned int
 
-void randMemAccess(int This[], uint32 the_len)
+void randMemAccess(unsigned int This[], unsigned int the_len)
 {
-	uint32 nextPos = 0;
-	uint32 checksum = 0;
-	for (long i = 0; i<the_len; i++)
+	unsigned int nextPos = 0;
+	unsigned int checksum = 0;
+	unsigned int i = 0;
+	for (i = 0; i < the_len; i++)
 	{
 		nextPos = This[nextPos];
 		checksum += nextPos;
@@ -20,10 +20,10 @@ void randMemAccess(int This[], uint32 the_len)
 //int my_array[ARRAY_SIZE];
 int *my_array;
  
-uint32 fill_array(int array_size)
+ unsigned int fill_array(int array_size)
 {
   int indx;
-  uint32 checksum = 0; 
+  unsigned int checksum = 0; 
   for (indx=0; indx < array_size; ++indx)
   {
     checksum += my_array[indx] = rand() % array_size;
@@ -31,28 +31,27 @@ uint32 fill_array(int array_size)
   return checksum;
 }
 
-#include <stdlib.h>
 
 int main(int argc, char *argv[])
 {
-  int indx;
-int array_size;
-  if (argc > 1)
-    {
-	array_size = atoi(argv[1]);
-    }
-    else
-    {
-	array_size = 1024;
-    }
+	int indx;
+	int array_size;
+	if (argc > 1)
+	{
+		array_size = atoi(argv[1]);
+	}
+	else
+	{
+		array_size = 1024;
+	}
 
-  my_array = (int *) malloc(sizeof(int)*array_size);
-  fill_array(array_size);
+	my_array = (int *) malloc(sizeof(int)*array_size);
+	fill_array(array_size);
  
-  randMemAccess(my_array, array_size);
+	randMemAccess(my_array, array_size);
  
-  free(my_array);
-  return(0);
+	free(my_array);
+	return(0);
 }
  
  
