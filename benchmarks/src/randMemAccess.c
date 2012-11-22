@@ -18,7 +18,7 @@ void randMemAccess(unsigned int This[], unsigned int the_len)
 //#define ARRAY_SIZE 250000
  
 //int my_array[ARRAY_SIZE];
-int *my_array;
+unsigned int *my_array;
  
  unsigned int fill_array(int array_size)
 {
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 		array_size = 1024;
 	}
 
-	my_array = (int *) malloc(sizeof(int)*array_size);
+	my_array = (unsigned int *) malloc(sizeof(unsigned int)*array_size);
 	fill_array(array_size);
  
 	randMemAccess(my_array, array_size);

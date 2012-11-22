@@ -247,7 +247,7 @@ function runProgram {
 
 
 SPECPROGRAM="401.bzip2"
-SPECRUNFOLDER="run_base_ref_gcc43-32bit.0000"
+SPECRUNFOLDER="run_base_ref_gcc47-64bit.0000"
 
 function setSPECCPUVars {
   clear
