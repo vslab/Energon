@@ -63,10 +63,6 @@ let sensors = [| extechWatt :> GenericSensor; new RemoteSensor("cpu-cycles", Dat
 //let sensors = [| r1 :> GenericSensor |]
 
 // DEBUG
-let e = new Experiment("quick_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("merges_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("heap_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("memtester_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 // CPU SPEC
 let e = new Experiment("401.bzip2_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
@@ -75,32 +71,38 @@ let e = new Experiment("445.gobmk_linux64", sensors, 0, [| "size" |], [||], fun 
 let e = new Experiment("444.namd_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("410.bwaves_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("454.calculix_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("429.mcf_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("464.h264ref_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("458.sjeng_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("471.omnetpp_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("434.zeusmp_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("453.povray_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("436.cactusADM_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("465.tonto_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("483.xalancbmk_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("462.libquantum_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("470.lbm_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("437.leslie3d_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("433.milc_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("450.soplex_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("403.gcc_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("482.sphinx3_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("456.hmmer_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("416.gamess_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("999.specrand_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("447.dealII_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("473.astar_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("400.perlbench_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("481.wrf_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("459.gemsFDTD_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("998.specrand_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
 
-let e = new Experiment("429.mcf_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("464.h264ref_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("458.sjeng_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("471.omnetpp_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("434.zeusmp_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("453.povray_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("436.cactusADM_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("465.tonto_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("483.xalancbmk_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("462.libquantum_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("470.lbm_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("437.leslie3d_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("433.milc_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("450.soplex_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("403.gcc_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("482.sphinx3_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("456.hmmer_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("416.gamess_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("999.specrand_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("447.dealII_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("473.astar_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("400.perlbench_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("481.wrf_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("459.gemsFDTD_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("998.specrand_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+
+let e = new Experiment("quick_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+// fatto fin qui
+let e = new Experiment("merges_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("heap_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("memtester_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 // db helper
 let server = "HPLAB\SQLEXPRESS"
@@ -110,7 +112,9 @@ let saver = new Energon.Storage.ExperimentRuntimeSaverExpress(e, server, dbname 
 
 // the helper makes easy to handle remote loads and remote sensors
 let helper = new RemoteExperimentHelper(e)
-           
+
+helper.Start()
+
 helper.Stop()
 
                                                                                                                                                                                                                                                                                                                                                                                             
