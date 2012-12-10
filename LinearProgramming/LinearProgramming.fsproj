@@ -32,6 +32,9 @@
     <DocumentationFile>bin\Release\LinearProgramming.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GlpkSharp">
+      <HintPath>GlpkSharp.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
