@@ -23,6 +23,10 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Benchmark", "Benchmark\Benc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLExpress", "SQLExpress\SQLExpress.csproj", "{012F4B6F-CA69-48D8-BF73-F5267882AE29}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RemoteWindowsBenchRunner", "RemoteWindowsBenchRunner\RemoteWindowsBenchRunner.fsproj", "{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LinearProgramming", "LinearProgramming\LinearProgramming.fsproj", "{53D00011-D0F2-413D-945E-219B7BB2233A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -167,6 +171,30 @@ Global
 		{012F4B6F-CA69-48D8-BF73-F5267882AE29}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{012F4B6F-CA69-48D8-BF73-F5267882AE29}.Release|Win32.ActiveCfg = Release|Any CPU
 		{012F4B6F-CA69-48D8-BF73-F5267882AE29}.Release|x86.ActiveCfg = Release|Any CPU
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Debug|Win32.ActiveCfg = Debug|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Debug|x86.ActiveCfg = Debug|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Debug|x86.Build.0 = Debug|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Release|Any CPU.ActiveCfg = Release|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Release|Mixed Platforms.Build.0 = Release|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Release|Win32.ActiveCfg = Release|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Release|x86.ActiveCfg = Release|x86
+		{9B8967BF-1503-4901-9F30-1AEB0A8EFD64}.Release|x86.Build.0 = Release|x86
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Release|Win32.ActiveCfg = Release|Any CPU
+		{53D00011-D0F2-413D-945E-219B7BB2233A}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

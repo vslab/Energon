@@ -97,12 +97,16 @@ let e = new Experiment("481.wrf_linux64", sensors, 0, [| "size" |], [||], fun _ 
 let e = new Experiment("459.gemsFDTD_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("998.specrand_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
 
+// ARM
+let e = new Experiment("quick_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("merges_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
 
-let e = new Experiment("quick_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("merges_linux64", sensors, 0, [| "size" |], [||], fun _ -> ())
+//TODO
+let e = new Experiment("heap_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
 
-let e = new Experiment("heap_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("memtester_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("randMemAccess_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("simpleINT_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("simpleFPU_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 // db helper
 let server = "HPLAB\SQLEXPRESS"
@@ -117,7 +121,7 @@ helper.Start()
 
 helper.Stop()
 
-                                                                                                                                                                                                                                                                                                                                                                                            
+
 
 
 let database = dbname

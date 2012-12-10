@@ -153,7 +153,8 @@ type ExperimentRuntimeSaverExpress(exp:Experiment, server:string, database:strin
         //db.Transaction <- t
         db.SubmitChanges(ConflictMode.ContinueOnConflict)
         //t.Commit()
-        for (e,c,r,s,read) in readingsList do
+        let rl2 = readingsList.ToList()
+        for (e,c,r,s,read) in rl2 do
             saveReading r s read
         readingsList.Clear()
 
