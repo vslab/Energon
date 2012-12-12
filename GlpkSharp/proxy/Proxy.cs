@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text;
 using GlpkSharp;
 
-
-namespace testClass
+namespace GlpkProxy
 {
     public class Proxy
     {
@@ -21,6 +20,8 @@ namespace testClass
             public double ObjResult { get; set; }
             public double[] Columns { get; set; }
         }
+
+        
 
         public result Simplex(int cols, int rows, OptimisationDirection direction, bound[] rowbounds, bound[] colbounds, int[] ia, int[] ja, double[] ar, double[] coeff)
         {

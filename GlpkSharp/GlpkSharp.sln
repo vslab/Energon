@@ -5,7 +5,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GlpkSharp", "GlpkSharp\Glpk
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestGlpkSharp", "TestGlpkSharp\TestGlpkSharp.csproj", "{B6EBE1CF-0BAD-4BDC-AEF9-724D3B297FF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlpkProxy", "testClass\GlpkProxy.csproj", "{4CED2B44-5B7A-48F7-B387-6131E191D09E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlpkProxy", "proxy\GlpkProxy.csproj", "{4CED2B44-5B7A-48F7-B387-6131E191D09E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5} = {AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

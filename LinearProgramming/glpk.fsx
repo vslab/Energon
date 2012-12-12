@@ -1,35 +1,60 @@
 ﻿#I @"C:\Users\root\Desktop\Energon\bin\Debug"
 #I @"C:\progetti\Energon\bin\Debug"
-#r @"testClass.dll"
+#r @"GlpkProxy.dll"
+
+open GlpkProxy
+
+let p1 = new Program()
+p1.Name <- "p1"
+p1.Measures <- [| 2.; 1. |]
+
+let p2 = new Program()
+p2.Name <- "p2"
+p2.Measures <- [| 1.; 2. |]
+
+let t = new Program()
+t.Name <- "target"
+t.Measures <- [| 1.; 1. |]
+
+let finder = new SplitupFinder()
+finder.Target <- t
+finder.Testbed <- [| p1; p2 |]
+finder.FindSplitup()
+finder.Splitup
+finder.Errors
+finder.TotalError
 
 #r @"GlpkSharp.dll"
 
 
 open GlpkSharp
 
-open testClass
 
-let t = new Class1()
-t.test2()
+let t = new Proxy()
 
-let rowbounds0 = new testClass.Class1.bound(BoundType = BOUNDSTYPE.Upper, lower = 0., upper=100.)
-let rowbounds1 = new testClass.Class1.bound(BoundType = BOUNDSTYPE.Upper, lower = 0., upper=600.)
-let rowbounds2 = new testClass.Class1.bound(BoundType = BOUNDSTYPE.Upper, lower = 0., upper=300.)
-let rowbouds = [| rowbounds0; rowbounds1; rowbounds2 |]
+let rowbounds0 = new GlpkProxy.Proxy.bound(BoundType = BOUNDSTYPE.Fixed, lower = 1., upper=100.)
+let rowbounds1 = new GlpkProxy.Proxy.bound(BoundType = BOUNDSTYPE.Fixed, lower = 1., upper=600.)
+let rowbouds = [| rowbounds0; rowbounds1|]
 
-let colbounds0 = new testClass.Class1.bound( BoundType = BOUNDSTYPE.Lower, lower = 0., upper = 0. )
-let colbounds1 = new testClass.Class1.bound( BoundType = BOUNDSTYPE.Lower, lower = 0., upper = 0. )
-let colbounds2 = new testClass.Class1.bound( BoundType = BOUNDSTYPE.Lower, lower = 0., upper = 0. )
-let colbouds = [| colbounds0; colbounds1; colbounds2 |]
+let colbounds0 = new GlpkProxy.Proxy.bound( BoundType = BOUNDSTYPE.Lower, lower = 0., upper = 0. )
+let colbounds1 = new GlpkProxy.Proxy.bound( BoundType = BOUNDSTYPE.Lower, lower = 0., upper = 0. )
+let colbounds2 = new GlpkProxy.Proxy.bound( BoundType = BOUNDSTYPE.Lower, lower = 0., upper = 0. )
+let colbounds3 = new GlpkProxy.Proxy.bound( BoundType = BOUNDSTYPE.Lower, lower = 0., upper = 0. )
+let colbounds4 = new GlpkProxy.Proxy.bound( BoundType = BOUNDSTYPE.Lower, lower = 0., upper = 0. )
+let colbounds5 = new GlpkProxy.Proxy.bound( BoundType = BOUNDSTYPE.Lower, lower = 0., upper = 0. )
+let colbouds = [| colbounds0; colbounds1; colbounds2; colbounds3; colbounds4; colbounds5 |]
 
 
-let ia = [| 0; 1; 1; 1; 2; 2; 2; 3; 3; 3 |]
-let ja = [| 0; 1; 2; 3; 1; 2; 3; 1; 2; 3 |]
-let ar = [| 0.; 1.; 1.; 1.; 10.; 4.; 5.; 2.; 2.; 6. |]
+let ia = [| 0; 1; 1; 1; 1; 2; 2; 2; 2 |]
+let ja = [| 0; 1; 2; 3; 4; 1; 2; 5; 6 |]
+let ar = [| 0.; 2.; 1.; 1.; -1.; 1.; 2.; 1.; -1. |]
 
-let coeff = [|10.; 6.; 4. |]
+let coeff = [| 0.; 0.; 1.; 1.; 1.; 1. |]
 
-t.Simplex(3, 3, OptimisationDirection.MAXIMISE, rowbouds, colbouds, ia, ja, ar, coeff);
+let r = t.Simplex(6, 2, OptimisationDirection.MINIMISE, rowbouds, colbouds, ia, ja, ar, coeff);
+
+r.ObjResult
+r.Columns
 
 
 
