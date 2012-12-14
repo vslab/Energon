@@ -56,12 +56,11 @@ let runCase prog arg =
     System.Console.WriteLine(System.String.Format("preparing to run program {0} with arg {1}", prog, arg))
     (helper.experimentCase args) |> ignore
     for i in 1..5 do
+        System.Threading.Thread.Sleep(1000)
         System.Console.WriteLine(System.String.Format("running iteration {0}", i))
         run prog arg
 
 let args = [| "1048576"; "4194304"; "16777216"; "67108864"; "268435456"; "1073741824" |]
-
-runCase "quick" args.[3]
 
 let runCycle prog =
     args |> Seq.iter (fun a -> runCase prog a )
@@ -71,9 +70,9 @@ runCycle "quick"
 runCycle "merges"
 runCycle "heap"
 
-runCase "randMemAccess" args.[3]
-runCase "simpleINT" args.[3]
-runCase "simpleFPU" args.[3]
+runCase "randMemAccess" args.[4]
+runCase "simpleINT" args.[4]
+runCase "simpleFPU" args.[4]
 
 
 (*
