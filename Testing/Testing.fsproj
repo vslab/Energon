@@ -41,6 +41,7 @@
     <None Include="Analysis.fsx" />
     <None Include="linux.fsx" />
     <None Include="windows.fsx" />
+    <None Include="test.fsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Extech\Extech.fsproj">
