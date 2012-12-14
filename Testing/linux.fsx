@@ -100,13 +100,18 @@ let e = new Experiment("998.specrand_linux64", sensors, 0, [| "size" |], [||], f
 // ARM
 let e = new Experiment("quick_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("merges_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
-
-//TODO
 let e = new Experiment("heap_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
 
-let e = new Experiment("randMemAccess_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("simpleINT_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
-let e = new Experiment("simpleFPU_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
+//TODO
+// win
+// randMemAccess
+
+
+let e = new Experiment("randMemAccess_win", sensors, 0, [| "size" |], [||], fun _ -> ())
+
+let e = new Experiment("simpleINT_win", sensors, 0, [| "size" |], [||], fun _ -> ())
+
+let e = new Experiment("simpleFPU_win", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 // db helper
 let server = "HPLAB\SQLEXPRESS"

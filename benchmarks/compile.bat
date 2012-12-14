@@ -10,6 +10,7 @@ cl.exe merges.c
 cl.exe randMemAccess.c
 cl.exe simpleFPU.c
 cl.exe simpleINT.c
+cl.exe pi.c
 
 del *.obj
 move *.exe ../

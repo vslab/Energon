@@ -7,7 +7,7 @@ CFLAGS=-c -Wall
 SRC=src
 BIN=bin
 
-all: bubble heap insert merges quick selection randMemAccess simpleFPU simpleINT memtester MemoryTester
+all: bubble heap insert merges quick selection pi randMemAccess simpleFPU simpleINT memtester MemoryTester
 
 bubble: $(SRC)/bubble.c
 	$(CC) $(SRC)/bubble.c -o $(BIN)/bubble
@@ -27,6 +27,9 @@ quick: $(SRC)/quick.c
 selection: $(SRC)/selection.c
 	$(CC) $(SRC)/selection.c -o $(BIN)/selection
 
+pi: $(SRC)/pi.c
+	$(CC) $(SRC)/pi.c -o $(BIN)/pi
+
 randMemAccess: $(SRC)/randMemAccess.c
 	$(CC) $(SRC)/randMemAccess.c -o $(BIN)/randMemAccess
 
@@ -43,4 +46,4 @@ MemoryTester: $(SRC)/MemoryTester.c
 	gcc $(SRC)/MemoryTester.c -o $(BIN)/MemoryTester
 
 clean:
-	rm -rf *o bubble heap insert merges quick selection randMemAccess simpleFPU simpleINT
+	rm -rf *o bubble heap insert merges quick selection randMemAccess simpleFPU simpleINT pi
