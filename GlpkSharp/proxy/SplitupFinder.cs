@@ -64,8 +64,32 @@ namespace GlpkProxy
             // so we can apply the simplex, see APPLIED MATHEMATICAL PROGRAMMING USING ALGEBRAIC SYSTEMS, CHAPTER IX: Linear Programming Modeling: non linearities and approximation, B. McCarl and T. Spreen
             // URL: http://chentserver.uwaterloo.ca/aelkamel/che720/che725-process-optimization/GAMS-tutorials/Bruce/thebook.pdf
             int programs = Testbed.Length;
-            int errorVariables = programs * 2;
+            int errorVariables = resources * 2;
             int columns = programs + errorVariables;
+            // Normalize testbed and target
+            Program[] NormalizedTestbed = new Program[Testbed.Length];
+            Program NormTarget = new Program();
+            NormTarget.Measures = new double[resources];
+            for (int i = 0; i < Testbed.Length; i++)
+            {
+                NormalizedTestbed[i] = new Program();
+                NormalizedTestbed[i].Measures = new double[resources];
+            }
+            for (int i = 0; i < resources; i++)
+            {
+                double max = 0.0000001;
+                for (int j = 0; j < Testbed.Length; j++)
+                {
+                    if (Testbed[j].Measures[i] > max)
+                        max = Testbed[j].Measures[i];
+                }
+                for (int j = 0; j < Testbed.Length; j++)
+                {
+                    NormalizedTestbed[j].Measures[i] = Testbed[j].Measures[i] / max;
+                }
+                NormTarget.Measures[i] = Target.Measures[i] / max;
+            }
+            
             List<int> ia = new List<int>();
             List<int> ja = new List<int>();
             List<double> ar = new List<double>();
@@ -78,7 +102,7 @@ namespace GlpkProxy
                     // glpk counts from 1 to n, not from 0 to n-1.. silly boy
                     ia.Add(row + 1);
                     ja.Add(column + 1);
-                    ar.Add(Testbed[column].Measures[row]);
+                    ar.Add(NormalizedTestbed[column].Measures[row]);
                 }
             }
             // now add epsilon+ and epsilon-
@@ -105,7 +129,7 @@ namespace GlpkProxy
             }
             // the Y array
             List<Proxy.bound> rowBounds = new List<Proxy.bound>();
-            foreach (var item in Target.Measures)
+            foreach (var item in NormTarget.Measures)
 	        {
                 Proxy.bound b = new Proxy.bound();
                 b.BoundType = BOUNDSTYPE.Fixed;

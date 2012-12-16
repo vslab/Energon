@@ -146,33 +146,104 @@ let buildTestBed (list:seq<seq<float>>) =
     let programSeq = Seq.map (fun (l:seq<float>) -> programFromAverages l) list
     programSeq.ToArray()
 
+let getProgNames (list:seq<int>) =
+    let concatNameAndArgs (name:string) (args:string) = 
+        //String.Format("{0}_{1}", name, args)
+        name
+    let getExperimentNameAndArgs caseid = 
+        let tmp = db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Id = caseid).First()
+        concatNameAndArgs (tmp.Name) (tmp.Args)
+    Seq.fold (fun (state:seq<string>) (id:int) -> Seq.append state [|getExperimentNameAndArgs id|]) Seq.empty<string> list
+
+let getProgNamesAndArgs (list:seq<int>) =
+    let concatNameAndArgs (name:string) (args:string) = 
+        String.Format("{0}_{1}", name, args)
+    let getExperimentNameAndArgs caseid = 
+        let tmp = db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Id = caseid).First()
+        concatNameAndArgs (tmp.Name) (tmp.Args)
+    Seq.fold (fun (state:seq<string>) (id:int) -> Seq.append state [|getExperimentNameAndArgs id|]) Seq.empty<string> list
+
+let getColumnsNames (list:seq<int array>) =
+    getProgNames (Seq.map (fun (l:int array) -> l.[0]) list)
+
+let sanityzeString (s:string) = 
+    s.Replace(";", " ")
+
+let sanityzeStringSeq (l:seq<string>) =
+    Seq.map sanityzeString l
+
+open System.Globalization
 
 let casesRandMemAccess =  [| 3409; 3415; 3419 |]
 let casesSimpleINT = [| 3410; 3416; 3420 |]
 let casesSimpleFPU = [| 3411; 3417; 3421 |]
 let casesTestbed = [| casesRandMemAccess; casesSimpleINT; casesSimpleFPU |]
 
-let casesPi = [| 3412; 3418; 3422 |]
 
-let casesHeap4M = [| 3198 ; 3293; 3363 |]
-let casesHeap16M = [| 3199; 3294; 3364 |]
-let casesHeap64M = [| 3200; 3295; 3365 |]
-let casesHeap256M = [| 3201; 3296; 3366 |]
+let columnsNames = getColumnsNames casesTestbed
 
 let s = new SplitupFinder()
 let testbedAvgs = getTestBedAverages casesTestbed
 s.Testbed <- (buildTestBed testbedAvgs)
 
-let p = new Program()
-p.Measures <- (getProgAverages casesHeap256M).ToArray()
-//p.Measures <- (getProgAverages casesRandMemAccess).ToArray()
-s.Target <- p
 
-//s.Testbed
-//p.Measures
+let printSplitups (progname:string) listOfTargets =
 
-s.FindSplitup()
-s.Splitup
+    let sbSplitups = new System.Text.StringBuilder()
+    sbSplitups.Append("program;") |> ignore
+
+    sbSplitups.AppendLine(String.concat ";" (sanityzeStringSeq columnsNames))  |> ignore
+
+
+    //let target = casesHeap256M
+
+    let findSplitup target =
+        let progname = (getProgNamesAndArgs target).First()
+        sbSplitups.AppendFormat("{0};", (sanityzeString progname)) |> ignore
+
+        let p = new Program()
+        p.Measures <- (getProgAverages target).ToArray()
+        //p.Measures <- (getProgAverages casesRandMemAccess).ToArray()
+        s.Target <- p
+
+        if (s.FindSplitup()) then
+            let floatToStrings (l:seq<float>) =
+                let ni = new System.Globalization.NumberFormatInfo()
+                ni.NumberDecimalSeparator <- "."
+                ni.NumberGroupSeparator <-""
+                Seq.map (fun (f:float) -> f.ToString(ni) ) l
+            sbSplitups.AppendLine(String.concat ";" (floatToStrings s.Splitup))  |> ignore
+
+    Seq.iter findSplitup listOfTargets
+    let filename = String.Format(@"C:\Users\root\Desktop\Energon\data\splitups{0}.csv", progname)
+    System.IO.File.WriteAllText(filename, sbSplitups.ToString())
+
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("pi")))
+let casesPi = [| 3412; 3418; 3422 |]
+printSplitups "Pi" [| casesPi |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("heap")))
+let casesHeap4M = [| 3293; 3198 ; 3363 |]
+let casesHeap16M = [| 3294; 3199; 3364 |]
+let casesHeap64M = [| 3295; 3200; 3365 |]
+let casesHeap256M = [| 3296; 3201; 3366 |]
+printSplitups "Heapsort" [| casesHeap4M; casesHeap16M; casesHeap64M; casesHeap256M |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("merge")))
+let casesMerge4M = [| 3287 ; 3192; 3357 |]
+let casesMerge16M = [| 3288; 3193; 3358 |]
+let casesMerge64M = [| 3289; 3194; 3359 |]
+let casesMerge256M = [| 3290; 3195; 3360 |]
+printSplitups "Mergesort" [| casesMerge4M; casesMerge16M; casesMerge64M; casesMerge256M |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("quick")))
+let casesQuick4M = [| 3281 ; 3181; 3351 |]
+let casesQuick16M = [| 3282; 3182; 3352 |]
+let casesQuick64M = [| 3283; 3183; 3353 |]
+let casesQuick256M = [| 3284; 3184; 3354 |]
+printSplitups "Quicksort" [| casesQuick4M; casesQuick16M; casesQuick64M; casesQuick256M |]
+
 
 let randMemAccessJ = Seq.map caseToAveragesOnlyJ casesRandMemAccess
 let simpleINTJ = Seq.map caseToAveragesOnlyJ casesSimpleINT

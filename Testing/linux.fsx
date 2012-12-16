@@ -39,7 +39,6 @@ open System.Data.DataSetExtensions
 let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.sdf"
 
 // ------ remote experiment
-open Energon.Measuring.Remote
 
 #r "Energon.Extech.dll"
 
@@ -49,13 +48,22 @@ open Energon.Extech380803
 let extechWatt = new Energon.Extech380803.Extech380803Sensor("extechWatt", DataType.Watt, 1.0)
 //let extechPF = new Energon.Extech380803.Extech380803Sensor("extechPF", DataType.PowerFactor, 1.0)
 //let extechV = new Energon.Extech380803.Extech380803Sensor("extechV", DataType.Volt, 1.0)
-//extechWatt.Start()
-//extechWatt.CurrValue()
-//extechWatt.Stop()
+extechWatt.Start()
+extechWatt.CurrValue()
+extechWatt.Stop()
+
+
+#r @"Energon.Phidgets.dll"
+open Phidgets30A
+
+openPhidgets() 
+
+let phidgetAmmeter = new AmmeterSensor("PhidgetsVA", 0, ifkit, 10.)
 
 //let sensors = [| extechWatt :> GenericSensor ; new RemoteSensor("test", DataType.Unknown) :> GenericSensor; new RemoteSensor("test", DataType.Unknown) :> GenericSensor|]
 //let sensors = [| new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
-let sensors = [| extechWatt :> GenericSensor; new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
+//let sensors = [| extechWatt :> GenericSensor; new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
+let sensors = [| phidgetAmmeter :> GenericSensor; new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 
 // declare a remote sensor
 
@@ -107,17 +115,21 @@ let e = new Experiment("heap_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
 // randMemAccess
 
 
-let e = new Experiment("randMemAccess_win", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("randMemAccess_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
-let e = new Experiment("simpleINT_win", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("simpleINT_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
-let e = new Experiment("simpleFPU_win", sensors, 0, [| "size" |], [||], fun _ -> ())
+let e = new Experiment("simpleFPU_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+
+let e = new Experiment("pi_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 // db helper
 let server = "HPLAB\SQLEXPRESS"
 let dbname = "Measure"
 let saver = new Energon.Storage.ExperimentRuntimeSaverExpress(e, server, dbname )
 
+
+open Energon.Measuring.Remote
 
 // the helper makes easy to handle remote loads and remote sensors
 let helper = new RemoteExperimentHelper(e)

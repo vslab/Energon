@@ -27,7 +27,9 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RemoteWindowsBenchRunner", 
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LinearProgramming", "LinearProgramming\LinearProgramming.fsproj", "{53D00011-D0F2-413D-945E-219B7BB2233A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLPKSharp", "GLPK\GLPKSharp.csproj", "{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GlpkSharp", "GlpkSharp\GlpkSharp\GlpkSharp.vcxproj", "{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlpkProxy", "GlpkSharp\proxy\GlpkProxy.csproj", "{4CED2B44-5B7A-48F7-B387-6131E191D09E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -197,18 +199,30 @@ Global
 		{53D00011-D0F2-413D-945E-219B7BB2233A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{53D00011-D0F2-413D-945E-219B7BB2233A}.Release|Win32.ActiveCfg = Release|Any CPU
 		{53D00011-D0F2-413D-945E-219B7BB2233A}.Release|x86.ActiveCfg = Release|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Debug|Win32.ActiveCfg = Debug|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Release|Win32.ActiveCfg = Release|Any CPU
-		{C8A055A4-D007-4B85-9E85-A8B6D3098E0F}.Release|x86.ActiveCfg = Release|Any CPU
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Debug|Win32.Build.0 = Debug|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Debug|x86.ActiveCfg = Debug|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Release|Any CPU.ActiveCfg = Release|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Release|Win32.ActiveCfg = Release|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Release|Win32.Build.0 = Release|Win32
+		{AF253395-9B6C-4819-8D8F-7A9B1B9BFAE5}.Release|x86.ActiveCfg = Release|Win32
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Release|Win32.ActiveCfg = Release|Any CPU
+		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
