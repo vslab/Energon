@@ -117,6 +117,11 @@ let caseToAveragesOnlyJ caseid =
     let j = w.Average.Value * s.Average.Value * averagePhi * V
     j
 
+let caseToAveragesOnlyT caseid =
+    let avgs = getAveragesForCase caseid
+    let s = avgs.Where(fun (a:AvgMeasures) -> a.Sensor_class_id=87).First()
+    s.Average.Value
+
 let caseToAveragesNoJ caseid =
     let avgs = getAveragesForCase caseid
     let filtered = avgs.Where(fun (a:AvgMeasures) -> a.Sensor_class_id <> WsensorID && a.Sensor_class_id <> otherWsensor)
@@ -124,7 +129,7 @@ let caseToAveragesNoJ caseid =
     response
 
 // print sensornames
-//let caseid = 3198
+//let caseid = 3206
 //Seq.iter (fun (c:AvgMeasures) -> System.Console.WriteLine("{0}:{1}:{2}",c.Sensor_class_id, c.SensorName, c.Average.Value)) ( getAveragesForCase caseid)
 
 // print values
@@ -174,38 +179,51 @@ let sanityzeStringSeq (l:seq<string>) =
 
 open System.Globalization
 
-let casesRandMemAccess =  [| 3409; 3415; 3419 |]
-let casesSimpleINT = [| 3410; 3416; 3420 |]
-let casesSimpleFPU = [| 3411; 3417; 3421 |]
-let casesTestbed = [| casesRandMemAccess; casesSimpleINT; casesSimpleFPU |]
 
 
-let columnsNames = getColumnsNames casesTestbed
-
-let s = new SplitupFinder()
-let testbedAvgs = getTestBedAverages casesTestbed
-s.Testbed <- (buildTestBed testbedAvgs)
 
 
-let printSplitups (progname:string) listOfTargets =
+let getEstimationError (target:int) (casesTestbed:seq<int>) (splitup:seq<float>) =
+    let testbedMeasuredT =  Seq.map (fun (id:int) -> caseToAveragesOnlyT id) casesTestbed
+    let estimateT =
+        let zipped = Seq.zip testbedMeasuredT splitup
+        Seq.fold (fun (state:float) (a:float,b:float) -> state + a*b) 0.0 zipped
+    let measuredTargetT = caseToAveragesOnlyT target
+    let difference = Math.Abs(measuredTargetT - estimateT)
+    let percentage = difference / measuredTargetT
+    (measuredTargetT, estimateT, difference, percentage)
 
+let printEstimationErrors (target:int) (casesTestbed:seq<int>) (splitup:seq<float>) (sb:StringBuilder) =
+    let expandcase id = db.ExperimentAndCases.Where(fun (c:ExperimentAndCases) -> c.Id = id).First()
+    let getname (expandcase:ExperimentAndCases) = 
+        String.Format("{0}_{1}", expandcase.Name, expandcase.Args)
+    let appendInfo id =
+        let name = getname (expandcase id)
+        let m,e,d, p = getEstimationError id casesTestbed splitup
+        sb.AppendLine(String.Format("{0};{1};{2};{3};{4}", sanityzeString name, m, e, d, p)) |> ignore
+    appendInfo target
+
+let printEstimations (targets:seq<int>) (casesTestbed:seq<int array>) (splitup:seq<float>) (sb:StringBuilder) =
+    let targetsArray = targets.ToArray()
+    let casesTestbedArray = casesTestbed.ToArray()
+    for i in 0..(targetsArray.Count()-1) do
+        let selectedtb = Seq.map (fun (l:int array) -> l.ElementAt i ) casesTestbed
+        let selectedt = targetsArray.ElementAt(i)
+        printEstimationErrors selectedt selectedtb splitup sb
+
+let printSplitups (progname:string) listOfTargets  (s:SplitupFinder) columnsNames (casesTestbed:seq<int array>) =
     let sbSplitups = new System.Text.StringBuilder()
     sbSplitups.Append("program;") |> ignore
-
     sbSplitups.AppendLine(String.concat ";" (sanityzeStringSeq columnsNames))  |> ignore
-
-
-    //let target = casesHeap256M
-
+    let sbEstimations = new System.Text.StringBuilder()
+    sbEstimations.AppendLine("program;measured;estimated;error;perc")  |> ignore
     let findSplitup target =
         let progname = (getProgNamesAndArgs target).First()
         sbSplitups.AppendFormat("{0};", (sanityzeString progname)) |> ignore
-
         let p = new Program()
         p.Measures <- (getProgAverages target).ToArray()
         //p.Measures <- (getProgAverages casesRandMemAccess).ToArray()
         s.Target <- p
-
         if (s.FindSplitup()) then
             let floatToStrings (l:seq<float>) =
                 let ni = new System.Globalization.NumberFormatInfo()
@@ -213,37 +231,215 @@ let printSplitups (progname:string) listOfTargets =
                 ni.NumberGroupSeparator <-""
                 Seq.map (fun (f:float) -> f.ToString(ni) ) l
             sbSplitups.AppendLine(String.concat ";" (floatToStrings s.Splitup))  |> ignore
-
+            printEstimations target casesTestbed (s.Splitup) sbEstimations
+        else
+            System.Console.WriteLine("could not find splitup")
     Seq.iter findSplitup listOfTargets
     let filename = String.Format(@"C:\Users\root\Desktop\Energon\data\splitups{0}.csv", progname)
     System.IO.File.WriteAllText(filename, sbSplitups.ToString())
+    let filename2 = String.Format(@"C:\Users\root\Desktop\Energon\data\estimations{0}.csv", progname)
+    System.IO.File.WriteAllText(filename2, sbEstimations.ToString())
+
+// --------------------- ONLY LINUX64 LINUX WIN --------------------------
+
+// pi and sorting algs: using linux64, linux and win
+let casesRandMemAccess =  [| 3409; 3415; 3419 |]
+let casesSimpleINT = [| 3410; 3416; 3420 |]
+let casesSimpleFPU = [| 3411; 3417; 3421 |]
+let casesTestbed = [| casesRandMemAccess; casesSimpleINT; casesSimpleFPU |]
+let columnsNames = getColumnsNames casesTestbed
+
+let s = new SplitupFinder()
+let testbedAvgs = getTestBedAverages casesTestbed
+s.Testbed <- (buildTestBed testbedAvgs)
 
 
 Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("pi")))
 let casesPi = [| 3412; 3418; 3422 |]
-printSplitups "Pi" [| casesPi |]
+printSplitups "Pi" [| casesPi |] s columnsNames casesTestbed
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("randMem")))
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("simple")))
+
 
 Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("heap")))
-let casesHeap4M = [| 3293; 3198 ; 3363 |]
-let casesHeap16M = [| 3294; 3199; 3364 |]
-let casesHeap64M = [| 3295; 3200; 3365 |]
-let casesHeap256M = [| 3296; 3201; 3366 |]
-printSplitups "Heapsort" [| casesHeap4M; casesHeap16M; casesHeap64M; casesHeap256M |]
+let casesHeap4M = [| 3293; 3198 ; 3363;  |]
+let casesHeap16M = [| 3294; 3199; 3364;  |]
+let casesHeap64M = [| 3295; 3200; 3365;  |]
+let casesHeap256M = [| 3296; 3201; 3366;  |]
+printSplitups "Heapsort_no_arm" [| casesHeap4M; casesHeap16M; casesHeap64M; casesHeap256M |] s columnsNames casesTestbed
+
+//Seq.iter (fun (a:AvgMeasures) -> System.Console.WriteLine(String.Format("{0}:{1}", a.SensorName, a.Sensor_class_id )) ) (getAveragesForCase 3409)
 
 Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("merge")))
-let casesMerge4M = [| 3287 ; 3192; 3357 |]
-let casesMerge16M = [| 3288; 3193; 3358 |]
-let casesMerge64M = [| 3289; 3194; 3359 |]
-let casesMerge256M = [| 3290; 3195; 3360 |]
-printSplitups "Mergesort" [| casesMerge4M; casesMerge16M; casesMerge64M; casesMerge256M |]
+let casesMerge4M = [| 3287 ; 3192; 3357; |]
+let casesMerge16M = [| 3288; 3193; 3358;  |]
+let casesMerge64M = [| 3289; 3194; 3359;  |]
+let casesMerge256M = [| 3290; 3195; 3360;  |]
+printSplitups "Mergesort_no_arm" [| casesMerge4M; casesMerge16M; casesMerge64M; casesMerge256M |] s columnsNames casesTestbed
 
 Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("quick")))
-let casesQuick4M = [| 3281 ; 3181; 3351 |]
-let casesQuick16M = [| 3282; 3182; 3352 |]
-let casesQuick64M = [| 3283; 3183; 3353 |]
-let casesQuick256M = [| 3284; 3184; 3354 |]
-printSplitups "Quicksort" [| casesQuick4M; casesQuick16M; casesQuick64M; casesQuick256M |]
+let casesQuick4M = [| 3281 ; 3181; 3351;  |]
+let casesQuick16M = [| 3282; 3182; 3352;  |]
+let casesQuick64M = [| 3283; 3183; 3353;  |]
+let casesQuick256M = [| 3284; 3184; 3354; |]
+printSplitups "Quicksort_no_arm" [| casesQuick4M; casesQuick16M; casesQuick64M; casesQuick256M |] s columnsNames casesTestbed
 
+
+
+
+// --------    with arm    --------
+
+let casesRandMemAccess =  [| 3409; 3415; 3419; 3329 |]
+let casesSimpleINT = [| 3410; 3416; 3420; 3330 |]
+let casesSimpleFPU = [| 3411; 3417; 3421; 3332 |]
+let casesTestbed = [| casesRandMemAccess; casesSimpleINT; casesSimpleFPU |]
+let columnsNames = getColumnsNames casesTestbed
+
+let s = new SplitupFinder()
+let testbedAvgs = getTestBedAverages casesTestbed
+s.Testbed <- (buildTestBed testbedAvgs)
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("heap")))
+let casesHeap4M = [| 3293; 3198 ; 3363; 3335 |]
+let casesHeap16M = [| 3294; 3199; 3364; 3336 |]
+let casesHeap64M = [| 3295; 3200; 3365; 3337 |]
+let casesHeap256M = [| 3296; 3201; 3366; 3338 |]
+printSplitups "Heapsort_arm" [| casesHeap4M; casesHeap16M; casesHeap64M; casesHeap256M |] s columnsNames casesTestbed
+
+//Seq.iter (fun (a:AvgMeasures) -> System.Console.WriteLine(String.Format("{0}:{1}", a.SensorName, a.Sensor_class_id )) ) (getAveragesForCase 3409)
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("merge")))
+let casesMerge4M = [| 3287 ; 3192; 3357; 3318 |]
+let casesMerge16M = [| 3288; 3193; 3358; 3319 |]
+let casesMerge64M = [| 3289; 3194; 3359; 3320 |]
+let casesMerge256M = [| 3290; 3195; 3360; 3321 |]
+printSplitups "Mergesort_arm" [| casesMerge4M; casesMerge16M; casesMerge64M; casesMerge256M |] s columnsNames casesTestbed
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("quick")))
+let casesQuick4M = [| 3281 ; 3181; 3351; 3312 |]
+let casesQuick16M = [| 3282; 3182; 3352; 3313 |]
+let casesQuick64M = [| 3283; 3183; 3353; 3314 |]
+let casesQuick256M = [| 3284; 3184; 3354; 3315 |]
+printSplitups "Quicksort_arm" [| casesQuick4M; casesQuick16M; casesQuick64M; casesQuick256M |] s columnsNames casesTestbed
+
+
+// ---------------------------- ONLY LINUX64 LINUX --------------------------------------
+
+// CPUSPEC
+let casesRandMemAccess =  [| 3409; 3415 |]
+let casesSimpleINT = [| 3410; 3416 |]
+let casesSimpleFPU = [| 3411; 3417|]
+let casesTestbed = [| casesRandMemAccess; casesSimpleINT; casesSimpleFPU |]
+let columnsNames = getColumnsNames casesTestbed
+
+let s = new SplitupFinder()
+let testbedAvgs = getTestBedAverages casesTestbed
+s.Testbed <- (buildTestBed testbedAvgs)
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("401")))
+let cases401 = [| 3242 ; 3206|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("435")))
+let cases435 = [| 3243 ; 3207|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("445")))
+let cases445 = [| 3244 ; 3208|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("444")))
+let cases444 = [| 3245 ; 3209|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("410")))
+let cases410 = [| 3250 ; 3210|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("429")))
+let cases429 = [| 3252 ; 3212|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("464")))
+let cases464 = [| 3253 ; 3213|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("458")))
+let cases458 = [| 3254 ; 3214|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("471")))
+let cases471 = [| 3255 ; 3215|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("434")))
+let cases434 = [| 3257 ; 3216|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("453")))
+let cases453 = [| 3255 ; 3215|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("436")))
+let cases436 = [| 3259 ; 3218|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("465")))
+let cases465 = [| 3260 ; 3219|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("483")))
+let cases483 = [| 3261 ; 3220|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("462")))
+let cases462 = [| 3262 ; 3221|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("470")))
+let cases470 = [| 3264 ; 3222|]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("437")))
+let cases437 = [| 3265 ; 3223 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("433")))
+let cases433 = [| 3266 ; 3224 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("450")))
+let cases450 = [| 3267 ; 3225 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("403")))
+let cases403 = [| 3268 ; 3226 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("482")))
+let cases482 = [| 3269 ; 3227 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("456")))
+let cases456 = [| 3270 ; 3228 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("416")))
+let cases416 = [| 3271 ; 3229 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("999")))
+let cases999 = [| 3272 ; 3232 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("447")))
+let cases447 = [| 3273 ; 3234 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("473")))
+let cases473 = [| 3274 ; 3235 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("400")))
+let cases400 = [| 3275 ; 3236 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("481")))
+let cases481 = [| 3276 ; 3237 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("459")))
+let cases459 = [| 3277 ; 3238 |]
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("998")))
+let cases998 = [| 3278 ; 3239 |]
+
+
+let specCases = [| cases401; cases435; cases445; cases444; cases410; cases429; cases464; cases458; cases471; cases434; cases453; cases436; cases465; cases483 ; cases462; cases470; cases437; cases433; cases450; cases403; cases482; cases456; cases416; cases999; cases447; cases473; cases400; cases481; cases459; cases998 |]
+printSplitups "CPUSPEC" specCases s columnsNames casesTestbed
+
+
+
+let test = getProgAverages cases401
+let test2 = test.ToArray()
+test2
+let test3 = caseToAveragesNoJ 3106
+let test4 = test3.ToArray()
+
+test.Count()
 
 let randMemAccessJ = Seq.map caseToAveragesOnlyJ casesRandMemAccess
 let simpleINTJ = Seq.map caseToAveragesOnlyJ casesSimpleINT

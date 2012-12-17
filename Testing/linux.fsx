@@ -64,6 +64,7 @@ let phidgetAmmeter = new AmmeterSensor("PhidgetsVA", 0, ifkit, 10.)
 //let sensors = [| new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 //let sensors = [| extechWatt :> GenericSensor; new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 let sensors = [| phidgetAmmeter :> GenericSensor; new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
+let sensors = [| new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 
 // declare a remote sensor
 
@@ -110,6 +111,7 @@ let e = new Experiment("quick_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("merges_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
 let e = new Experiment("heap_arm", sensors, 0, [| "size" |], [||], fun _ -> ())
 
+
 //TODO
 // win
 // randMemAccess
@@ -122,6 +124,8 @@ let e = new Experiment("simpleINT_linux", sensors, 0, [| "size" |], [||], fun _ 
 let e = new Experiment("simpleFPU_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 let e = new Experiment("pi_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
+
+let e = new Experiment("test_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 // db helper
 let server = "HPLAB\SQLEXPRESS"
