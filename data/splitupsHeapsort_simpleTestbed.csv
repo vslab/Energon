@@ -1,0 +1,5 @@
+program;randMemAccess_linux64;simpleINT_linux64;simpleFPU_linux64
+heap_linux64_4194304 ;0.17655903981866;0;0
+heap_linux64_16777216 ;0.923775812404961;0;0
+heap_linux64_67108864 ;4.6527599928467;0;0
+heap_linux64_268435456 ;23.5434546701883;0;0

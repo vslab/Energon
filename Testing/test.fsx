@@ -143,6 +143,8 @@ let getProgAverages (list:seq<int>) =
     Seq.fold (fun (state:seq<float>) (id:int) -> Seq.append state (caseToAveragesNoJ id)) Seq.empty<float> list
 let getTestBedAverages (list:seq<int array>) =
     Seq.map (fun (l:int array) -> getProgAverages l) list    
+let getTestBedAveragesArrays (list:seq<int array>) =
+    (Seq.map (fun (l:int array) -> (getProgAverages l).ToArray() ) list).ToArray()   
 let buildTestBed (list:seq<seq<float>>) =
     let programFromAverages (l:seq<float>) =
         let p = new Program()
@@ -239,6 +241,54 @@ let printSplitups (progname:string) listOfTargets  (s:SplitupFinder) columnsName
     System.IO.File.WriteAllText(filename, sbSplitups.ToString())
     let filename2 = String.Format(@"C:\Users\root\Desktop\Energon\data\estimations{0}.csv", progname)
     System.IO.File.WriteAllText(filename2, sbEstimations.ToString())
+
+
+// --------------------- ONLY LINUX64 LINUX --------------------------
+
+// pi and sorting algs: using linux64, linux and win
+let casesRandMemAccess =  [| 3409; 3415; |]
+let casesSimpleINT = [| 3410; 3416; |]
+let casesSimpleFPU = [| 3411; 3417;|]
+let casesTestbed = [| casesRandMemAccess; casesSimpleINT; casesSimpleFPU |]
+let columnsNames = getColumnsNames casesTestbed
+
+let s = new SplitupFinder()
+let testbedAvgs = getTestBedAverages casesTestbed
+s.Testbed <- (buildTestBed testbedAvgs)
+
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("pi")))
+let casesPi = [| 3412; 3418; 3422 |]
+printSplitups "Pi_simpleTestbed" [| casesPi |] s columnsNames casesTestbed
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("randMem")))
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("simple")))
+
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("heap")))
+let casesHeap4M = [| 3293; 3198 ; |]
+let casesHeap16M = [| 3294; 3199;   |]
+let casesHeap64M = [| 3295; 3200;  |]
+let casesHeap256M = [| 3296; 3201;  |]
+printSplitups "Heapsort_simpleTestbed" [| casesHeap4M; casesHeap16M; casesHeap64M; casesHeap256M |] s columnsNames casesTestbed
+
+//Seq.iter (fun (a:AvgMeasures) -> System.Console.WriteLine(String.Format("{0}:{1}", a.SensorName, a.Sensor_class_id )) ) (getAveragesForCase 3409)
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("merge")))
+let casesMerge4M = [| 3287 ; 3192;  |]
+let casesMerge16M = [| 3288; 3193; |]
+let casesMerge64M = [| 3289; 3194; |]
+let casesMerge256M = [| 3290; 3195; |]
+printSplitups "Mergesort_simpleTestbed" [| casesMerge4M; casesMerge16M; casesMerge64M; casesMerge256M |] s columnsNames casesTestbed
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("quick")))
+let casesQuick4M = [| 3281 ; 3181; |]
+let casesQuick16M = [| 3282; 3182; |]
+let casesQuick64M = [| 3283; 3183; |]
+let casesQuick256M = [| 3284; 3184; |]
+printSplitups "Quicksort_simpleTestbed" [| casesQuick4M; casesQuick16M; casesQuick64M; casesQuick256M |] s columnsNames casesTestbed
+
+
 
 // --------------------- ONLY LINUX64 LINUX WIN --------------------------
 
@@ -337,8 +387,10 @@ let s = new SplitupFinder()
 let testbedAvgs = getTestBedAverages casesTestbed
 s.Testbed <- (buildTestBed testbedAvgs)
 
+
 Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("401")))
 let cases401 = [| 3242 ; 3206|]
+Seq.iter (fun (c:float) -> System.Console.WriteLine("{0}", c)) (caseToAveragesNoJ (cases401.ElementAt 0) )
 
 Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("435")))
 let cases435 = [| 3243 ; 3207|]
@@ -421,6 +473,7 @@ let cases400 = [| 3275 ; 3236 |]
 Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("481")))
 let cases481 = [| 3276 ; 3237 |]
 
+
 Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("459")))
 let cases459 = [| 3277 ; 3238 |]
 
@@ -431,36 +484,129 @@ let cases998 = [| 3278 ; 3239 |]
 let specCases = [| cases401; cases435; cases445; cases444; cases410; cases429; cases464; cases458; cases471; cases434; cases453; cases436; cases465; cases483 ; cases462; cases470; cases437; cases433; cases450; cases403; cases482; cases456; cases416; cases999; cases447; cases473; cases400; cases481; cases459; cases998 |]
 printSplitups "CPUSPEC" specCases s columnsNames casesTestbed
 
+// -------------- testbed using cpuspec ----------- 
+
+let avgs1 = (getProgAverages cases998).ToArray()
+let avgs2 = (getProgAverages cases459).ToArray()
+let distance l1 l2 =
+    let zipped = Seq.zip l1 l2
+    let (sum) = Seq.fold (fun (sum) (v1, v2)-> (sum+(v2-v1)*(v2-v1))) (0.) zipped
+    Math.Sqrt sum
+let average (list) =
+    let (sum, count) = list |> Seq.fold (fun (sums, count) (l) -> ((Seq.zip sums l |> Seq.map (fun (v1:float,v2:float)->v1+v2) ), ( Seq.map (fun c -> c + 1.) count ))) (Seq.init (list.First().Count()) (fun _ -> 0.), Seq.init (list.First().Count()) (fun _ -> 0.))
+    let l = (Seq.map (fun (s,c) -> s/c) (Seq.zip sum count))
+    l.ToArray()
+let same s1 s2 =
+    Seq.forall2 (fun (f1:float) (f2:float) -> f1=f2) s1 s2
+
+let rec kmeansCore n (seeds:float[][]) (points:seq<float array>) =
+    if n=0 then
+        seeds
+    else
+        let grouped = points.GroupBy(fun l -> seeds.OrderBy(fun x -> distance x l).First())
+        let newseeds = (Seq.map average grouped).ToArray()
+        if (Seq.forall2 same seeds newseeds) then
+            seeds
+        else
+            kmeansCore (n-1) newseeds points
+
+let pickRandomElements (l:float[][]) n =
+    let dt = DateTime.Now
+    let random = new Random(dt.Millisecond + 1000*dt.Second + 60000*dt.Minute)
+    let rec pickRandomElement (res:float[][]) (src:float[][]) n =
+        if n>0 then
+            let idx = random.Next(0, src.Length - 1)
+            let chosen = src.ElementAt idx
+            let newres = res.Concat( [| chosen |] ).ToArray()
+            pickRandomElement newres (src.Where(fun f -> f <> chosen).ToArray()) (n-1)
+        else
+            res
+    let start:float[][] = [| |]
+    pickRandomElement start l n
+
+let clusterError (centers:float[][]) (points:float[][]) = 
+     let grouped = points.GroupBy(fun l -> centers.OrderBy(fun x -> distance x l).First())        
+     grouped.Aggregate(0., fun (sum:float) (element:IGrouping<float[], float[]>) -> sum + element.ToList().Aggregate(0., fun (insum:float) (el:float[]) -> insum + distance (element.Key) el) )
+
+let kmeanstep (points:float[][]) size =
+    let seeds = pickRandomElements points size
+    let centers = kmeansCore 10 seeds points
+    let error = clusterError centers points
+    centers, error
+
+let rec kmeans points n =
+    let centers, error = kmeanstep points n
+    if n > 2 then
+        let othercenters, othererror = kmeans points (n-1)
+        if (othererror > error) then
+            centers, error
+        else
+            othercenters, othererror
+    else
+        centers, error
+
+let normalizedKmeans (points:float[][]) n =
+    let resources = points.ElementAt(0).Count()
+    let max (v1:float, v2:float) = if v1> v2 then v1 else v2 
+    let maxv = points.Aggregate(Array.init (resources) (fun _ -> 0.), fun state prog ->  (Seq.map max (Seq.zip state prog)).ToArray() ).ToArray() 
+    let normVect prog = (Seq.zip prog maxv |> Seq.map (fun (a:float, b:float) -> a/b)).ToArray()
+    let normalizedPoints = (Seq.map normVect points).ToArray()
+    let c, e = kmeans normalizedPoints n
+    let nearest = Seq.map (fun (center:float[]) -> normalizedPoints.OrderBy(fun x -> distance x center).First() ) c
+    let getIndex prog =
+        let mutable idx = -1
+        for i in 0..(normalizedPoints.Count()-1) do
+            if (Seq.forall2 (fun v1 v2 -> v1 = v2) prog (normalizedPoints.ElementAt i)) then
+                idx <- i
+        idx
+    (Seq.map (fun (prog:float[]) -> points.ElementAt(getIndex prog) ) nearest).ToArray(), (Seq.map (fun (prog:float[]) -> getIndex prog ) nearest).ToArray()
+    
+let test1 = [| [| 0.; 1. |]; [| 1. ; 0.|] |]
+test1.Aggregate(Array.init (2) (fun _ -> 0.), fun state prog -> (Seq.zip state prog |> Seq.map (fun (v1:float,v2:float) -> Math.Max(v1,v2) )).ToArray()  )
+
+let programs = getTestBedAveragesArrays specCases
+
+let c, indices = normalizedKmeans programs 3
+let casesTestbed = Seq.map (fun i -> specCases.ElementAt(i)) indices
+
+let columnsNames = getColumnsNames casesTestbed
+
+let s = new SplitupFinder()
+let testbedAvgs = getTestBedAverages casesTestbed
+s.Testbed <- (buildTestBed testbedAvgs)
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("heap")))
+let casesHeap4M = [| 3293; 3198 ; |]
+let casesHeap16M = [| 3294; 3199; |]
+let casesHeap64M = [| 3295; 3200; |]
+let casesHeap256M = [| 3296; 3201;  |]
+printSplitups "Heapsort_cpuspec" [| casesHeap4M; casesHeap16M; casesHeap64M; casesHeap256M |] s columnsNames casesTestbed
+
+let casesMerge4M = [| 3287 ; 3192;  |]
+let casesMerge16M = [| 3288; 3193; |]
+let casesMerge64M = [| 3289; 3194; |]
+let casesMerge256M = [| 3290; 3195; |]
+printSplitups "Mergesort_cpuspec" [| casesMerge4M; casesMerge16M; casesMerge64M; casesMerge256M |] s columnsNames casesTestbed
+
+Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("quick")))
+let casesQuick4M = [| 3281 ; 3181; |]
+let casesQuick16M = [| 3282; 3182; |]
+let casesQuick64M = [| 3283; 3183; |]
+let casesQuick256M = [| 3284; 3184; |]
+printSplitups "Quicksort_cpuspec" [| casesQuick4M; casesQuick16M; casesQuick64M; casesQuick256M |] s columnsNames casesTestbed
+
+let casesRandMemAccess =  [| 3409; 3415; |]
+printSplitups "RandMemAccess_cpuspec" [| casesRandMemAccess;|] s columnsNames casesTestbed
+
+let casesSimpleINT = [| 3410; 3416; |]
+printSplitups "SimpleINT_cpuspec" [| casesSimpleINT; |] s columnsNames casesTestbed
+
+let casesSimpleFPU = [| 3411; 3417;|]
+printSplitups "SimpleFPU_cpuspec" [| casesSimpleFPU;|] s columnsNames casesTestbed
 
 
-let test = getProgAverages cases401
-let test2 = test.ToArray()
-test2
-let test3 = caseToAveragesNoJ 3106
-let test4 = test3.ToArray()
-
-test.Count()
-
-let randMemAccessJ = Seq.map caseToAveragesOnlyJ casesRandMemAccess
-let simpleINTJ = Seq.map caseToAveragesOnlyJ casesSimpleINT
-let simpleFPUJ = Seq.map caseToAveragesOnlyJ casesSimpleFPU
-let PiJ = Seq.map caseToAveragesOnlyJ casesHeap256M
-
-randMemAccessJ
-
-let splitupWithoutJ = s.Splitup
-let splitupWithJ = s.Splitup
-splitupWithoutJ
-splitupWithJ
-let prev0 = Seq.map (fun (p:float) -> p * s.Splitup.[0]) randMemAccessJ
-let prev1 = Seq.map (fun (p:float) -> p * s.Splitup.[1]) simpleINTJ
-let prev2 = Seq.map (fun (p:float) -> p * s.Splitup.[2]) simpleFPUJ
-PiJ
-prev0
-prev1
-prev2
-
-
+let casesPi = [| 3412; 3418 |]
+printSplitups "Pi_cpuspec" [| casesPi |] s columnsNames casesTestbed
 
 
 
