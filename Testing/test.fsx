@@ -241,6 +241,7 @@ let printSplitups (progname:string) listOfTargets  (s:SplitupFinder) columnsName
     System.IO.File.WriteAllText(filename, sbSplitups.ToString())
     let filename2 = String.Format(@"C:\Users\root\Desktop\Energon\data\estimations{0}.csv", progname)
     System.IO.File.WriteAllText(filename2, sbEstimations.ToString())
+    Console.WriteLine(String.Format(@"---- done processing {0}", progname))
 
 
 // --------------------- ONLY LINUX64 LINUX --------------------------
@@ -580,35 +581,43 @@ let casesHeap4M = [| 3293; 3198 ; |]
 let casesHeap16M = [| 3294; 3199; |]
 let casesHeap64M = [| 3295; 3200; |]
 let casesHeap256M = [| 3296; 3201;  |]
-printSplitups "Heapsort_cpuspec" [| casesHeap4M; casesHeap16M; casesHeap64M; casesHeap256M |] s columnsNames casesTestbed
+printSplitups "Heapsort_cpuspec6" [| casesHeap4M; casesHeap16M; casesHeap64M; casesHeap256M |] s columnsNames casesTestbed
 
 let casesMerge4M = [| 3287 ; 3192;  |]
 let casesMerge16M = [| 3288; 3193; |]
 let casesMerge64M = [| 3289; 3194; |]
 let casesMerge256M = [| 3290; 3195; |]
-printSplitups "Mergesort_cpuspec" [| casesMerge4M; casesMerge16M; casesMerge64M; casesMerge256M |] s columnsNames casesTestbed
+printSplitups "Mergesort_cpuspec6" [| casesMerge4M; casesMerge16M; casesMerge64M; casesMerge256M |] s columnsNames casesTestbed
 
 Seq.iter (fun (c:ExperimentAndCases) -> System.Console.WriteLine("{0}:{1}:{2}:{3}", c.Experiment_id, c.Name, c.Id, c.Args)) (db.ExperimentAndCases.Where(fun (e:ExperimentAndCases) -> e.Name.StartsWith("quick")))
 let casesQuick4M = [| 3281 ; 3181; |]
 let casesQuick16M = [| 3282; 3182; |]
 let casesQuick64M = [| 3283; 3183; |]
 let casesQuick256M = [| 3284; 3184; |]
-printSplitups "Quicksort_cpuspec" [| casesQuick4M; casesQuick16M; casesQuick64M; casesQuick256M |] s columnsNames casesTestbed
+printSplitups "Quicksort_cpuspec6" [| casesQuick4M; casesQuick16M; casesQuick64M; casesQuick256M |] s columnsNames casesTestbed
 
 let casesRandMemAccess =  [| 3409; 3415; |]
-printSplitups "RandMemAccess_cpuspec" [| casesRandMemAccess;|] s columnsNames casesTestbed
+printSplitups "RandMemAccess_cpuspec6" [| casesRandMemAccess;|] s columnsNames casesTestbed
 
 let casesSimpleINT = [| 3410; 3416; |]
-printSplitups "SimpleINT_cpuspec" [| casesSimpleINT; |] s columnsNames casesTestbed
+printSplitups "SimpleINT_cpuspec6" [| casesSimpleINT; |] s columnsNames casesTestbed
 
 let casesSimpleFPU = [| 3411; 3417;|]
-printSplitups "SimpleFPU_cpuspec" [| casesSimpleFPU;|] s columnsNames casesTestbed
+printSplitups "SimpleFPU_cpuspec6" [| casesSimpleFPU;|] s columnsNames casesTestbed
 
 
 let casesPi = [| 3412; 3418 |]
-printSplitups "Pi_cpuspec" [| casesPi |] s columnsNames casesTestbed
+printSplitups "Pi_cpuspec6" [| casesPi |] s columnsNames casesTestbed
 
 
+
+let specCases3 = [| cases401; cases435; cases410; cases429; cases464; cases458; cases471; cases434; cases453; cases436; cases465; cases483 ; cases462; cases470; cases433; cases450; cases403; cases482; cases456; cases416; cases999; cases447; cases473; cases400; cases481; cases459; cases998 |]
+printSplitups "CPUSPEC_cpuspec3" specCases3 s columnsNames casesTestbed
+
+let specCases6 = [| cases401; cases435;  cases444; cases410; cases429; cases458; cases434; cases453; cases465; cases483 ; cases462; cases470; cases437; cases433; cases450; cases403; cases482;  cases416; cases999; cases447; cases473; cases400; cases481; cases459 |]
+printSplitups "CPUSPEC_cpuspec6" specCases6 s columnsNames casesTestbed
+
+columnsNames.ToArray()
 
 
 
