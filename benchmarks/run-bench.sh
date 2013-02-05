@@ -300,7 +300,7 @@ function runiozone {
     IOZONEPROG=$p
     #for s in 4 16 256 1024 ; do
       #IOZONESIZE=$s
-      IOZONESIZE=256
+      IOZONESIZE="64m"
       newIozoneCase
       setupIozone
       i=0
