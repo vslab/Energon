@@ -41,7 +41,7 @@ function printSelectedPerfCounters {
 
 function setPerformanceCounters {
   # gather the available perf counters
-  perfout=`perf list hw 2>&1`
+  perfout=`perf list hw sw 2>&1`
   ll=($perfout)
   count=1
   declare -a res
@@ -49,7 +49,7 @@ function setPerformanceCounters {
   skipnext="no"
   for w in ${ll[@]}; 
   do
-    if [[ $w != "[Hardware" ]] && [[ $w != "event]" ]] ; then
+    if [ $w != "[Software" ] && [ $w !=  "[Hardware" ] && [ $w != "event]" ] ; then
       if [[ $w == "OR" ]] ; then
         skipnext="yes"
       else
