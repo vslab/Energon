@@ -291,15 +291,16 @@ function newIozoneCase {
 }
 
 function setupIozone  {
-  PROGR="$IOZONEEXEC -s $IOZONESIZE -i $IOZONEPROG"
+  PROGR="$IOZONEEXEC -w  -s $IOZONESIZE -i $IOZONEPROG"
   INSIZE=""
 }
 
 function runiozone {
   for p in 0 1 2 3 4 5 6 7 8 9 10 11 12 ; do
     IOZONEPROG=$p
-    for s in 4 16 256 1024 ; do
-      IOZONESIZE=$s
+    #for s in 4 16 256 1024 ; do
+      #IOZONESIZE=$s
+      IOZONESIZE=256
       newIozoneCase
       setupIozone
       i=0
@@ -311,7 +312,7 @@ function runiozone {
         ((i++))
         sleep 1
       done
-    done
+    #done
   done
 }
 
