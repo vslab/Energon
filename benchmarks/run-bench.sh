@@ -14,9 +14,9 @@ REMOTE=$3
 ITER=1
 PERFARGS=" "
 PROTOCOL="http://"
-NEWCASE="/Temporary_Listen_Addresses/case"
-START="/Temporary_Listen_Addresses/start"
-STOP="/Temporary_Listen_Addresses/stop"
+NEWCASE="/Temporary_Listen_Addresses/0/case"
+START="/Temporary_Listen_Addresses/0/start"
+STOP="/Temporary_Listen_Addresses/0/stop"
 DIVISOR="/"
 
 STARTDIR=`pwd`
