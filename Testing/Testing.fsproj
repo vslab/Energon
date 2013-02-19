@@ -42,6 +42,7 @@
     <None Include="linux.fsx" />
     <None Include="windows.fsx" />
     <None Include="test.fsx" />
+    <None Include="virtualmachines.fsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Extech\Extech.fsproj">

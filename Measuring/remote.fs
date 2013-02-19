@@ -7,13 +7,13 @@ open System.Text
 open Energon.Measuring
 open System.Collections.Generic
 
-type WebListener(startCallback, stopCallback, newCase) =
-  let address = "http://+:80/Temporary_Listen_Addresses/"
+type WebListener(startCallback, stopCallback, newCase, uid:string) =
+  let address = System.String.Format("http://+:80/Temporary_Listen_Addresses/{0}/", uid)
   let listener = new System.Net.HttpListener()
   let rec GetContextCallback(result:IAsyncResult) =
     let context = listener.EndGetContext(result)
     let request = context.Request
-    let relPath = request.Url.PathAndQuery.Substring("/Temporary_Listen_Addresses/".Length )
+    let relPath = request.Url.PathAndQuery.Substring(System.String.Format("/Temporary_Listen_Addresses/{0}/", uid).Length )
     printf "%s\n" relPath |> ignore
     let spl = List.toArray ["/"; "?"]
     let tags = relPath.Split(spl, StringSplitOptions.RemoveEmptyEntries) |> Array.map (fun (s:string) -> 
@@ -46,7 +46,7 @@ type WebListener(startCallback, stopCallback, newCase) =
 
 
 /// <summary>An helper class that handles an experiment where the load is run remotely, with remote sensors</summary>
-type RemoteExperimentHelper(e:Experiment) = 
+type RemoteExperimentHelper(e:Experiment, uid:string) = 
     let start() = 
         // start a new experiment run
         let er = new ExperimentRun(e.Sensors)
@@ -82,7 +82,7 @@ type RemoteExperimentHelper(e:Experiment) =
         let argsAsObj = tail |> Seq.map (fun (s:string) -> (s :> obj))
         let newCase = new ExperimentCase(e.Sensors, 0, argsAsObj , (fun _ -> ()) )
         e.AddExperimentCase newCase
-    let w = new WebListener(start, stop, caseCallback)
+    let w = new WebListener(start, stop, caseCallback, uid)
 
     member x.Start() =
         w.start()
@@ -92,9 +92,9 @@ type RemoteExperimentHelper(e:Experiment) =
 
 
 /// <summary> This class should be used on the remote side, in the case that we are measuring a remote process, with remote sensors </summary>
-type RemoteSensorHelper(ip:string) =
+type RemoteSensorHelper(ip:string, uid:string) =
     let wc = new WebClient()
-    let address = System.String.Format(@"http://{0}/Temporary_Listen_Addresses", ip)
+    let address = System.String.Format(@"http://{0}/Temporary_Listen_Addresses/{1}", ip, uid)
     member x.start() =
         let addr = System.String.Format(@"{0}/{1}", address, "start")
         try
