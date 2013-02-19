@@ -14,3 +14,9 @@ runspec --tune=base --config=Khushboo-macosx.cfg --size=test ?
 
 to compile on linux just run make
 to compile on windows run compile.bat from the visual studio command line
+
+
+iozone
+sudo su -
+wget http://www.iozone.org/src/current/iozone3_414.tar
+tar xvf iozone3_414.tar

@@ -41,7 +41,7 @@ function printSelectedPerfCounters {
 
 function setPerformanceCounters {
   # gather the available perf counters
-  perfout=`perf list hw 2>&1`
+  perfout=`perf list hw sw 2>&1`
   ll=($perfout)
   count=1
   declare -a res
@@ -49,7 +49,7 @@ function setPerformanceCounters {
   skipnext="no"
   for w in ${ll[@]}; 
   do
-    if [[ $w != "[Hardware" ]] && [[ $w != "event]" ]] ; then
+    if [ $w != "[Software" ] && [ $w !=  "[Hardware" ] && [ $w != "event]" ] ; then
       if [[ $w == "OR" ]] ; then
         skipnext="yes"
       else
@@ -277,6 +277,45 @@ function selectSPECCPU {
   INSIZE=""
 }
 
+# -----  iozone  ------
+IOZONEEXEC="/root/iozone3_414/src/current/iozone"
+IOZONESIZE=4
+IOZONEPROG=0
+
+# create new experiment
+function newIozoneCase {
+  URL=$PROTOCOL$REMOTE$NEWCASE$DIVISOR$IOZONEPROG$DIVISOR$IOZONESIZE
+  echo calling $URL
+  CURLRES=`curl $URL`
+  echo $CURLRES
+}
+
+function setupIozone  {
+  PROGR="$IOZONEEXEC -w  -s $IOZONESIZE -i $IOZONEPROG"
+  INSIZE=""
+}
+
+function runiozone {
+  for p in 0 1 2 3 4 5 6 7 8 9 10 11 12 ; do
+    IOZONEPROG=$p
+    #for s in 4 16 256 1024 ; do
+      #IOZONESIZE=$s
+      IOZONESIZE="64m"
+      newIozoneCase
+      setupIozone
+      i=0
+      while [ $i -lt $ITER ] ; do
+        setupIozone
+        callRun
+        runProgram
+        callStop
+        ((i++))
+        sleep 1
+      done
+    #done
+  done
+}
+
 # call stop (to stop the ammeter)
 function callStop {
   URL=$PROTOCOL$REMOTE$STOP
@@ -301,7 +340,6 @@ function experiment {
       sleep 1
     done
   done
-
 }
 
 clear
@@ -325,7 +363,8 @@ echo "5. set input size"
 echo "6. set remote host ip"
 echo "7. set performance counters"
 echo "8. set iter (number of iterations of every run)"
-echo "9. exit"
+echo "9. run iozone set"
+echo "10. exit"
 echo -n "Your choice? : "
 read choice
 
@@ -348,7 +387,8 @@ case $choice in
 6) setRemoteIP ;;
 7) setPerformanceCounters ;;
 8) setIter ;;
-9) quit="yes" ;;
+9) runiozone ;;
+10) quit="yes" ;;
 *) echo "\"$choice\" is not valid"
 esac
 done
