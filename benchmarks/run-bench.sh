@@ -15,15 +15,9 @@ REMOTEUID=$2
 ITER=1
 PERFARGS=" "
 PROTOCOL="http://"
-<<<<<<< HEAD
-NEWCASE="/Temporary_Listen_Addresses/$REMOTEUID/case"
-START="/Temporary_Listen_Addresses/$REMOTEUID/start"
-STOP="/Temporary_Listen_Addresses/$REMOTEUID/stop"
-=======
 NEWCASE="/Temporary_Listen_Addresses/0/case"
 START="/Temporary_Listen_Addresses/0/start"
 STOP="/Temporary_Listen_Addresses/0/stop"
->>>>>>> 408e4b894f9102e1a29b531a0d726455ed489811
 DIVISOR="/"
 
 STARTDIR=`pwd`

@@ -206,11 +206,14 @@ int array_size;
     }
 
   my_array = (int *) malloc(sizeof(int)*array_size);
-  fill_array(array_size);
- 
-  ArraySort(my_array, cmpfun, array_size);
- 
-  free(my_array);
+  if (my_array)
+  {
+    fill_array(array_size);
+    ArraySort(my_array, cmpfun, array_size);
+    free(my_array);
+  } else {
+    printf("could not allocate array");
+  }
   return(0);
 }
  
