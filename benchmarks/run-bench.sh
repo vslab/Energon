@@ -8,15 +8,16 @@ fi
 # $1 is the algo
 # $2 is the array size
 
-PROGR=$1
-INSIZE=$2
-REMOTE=$3
+PROGR=$3
+INSIZE=$4
+REMOTE=$1
+REMOTEUID=$2
 ITER=1
 PERFARGS=" "
 PROTOCOL="http://"
-NEWCASE="/Temporary_Listen_Addresses/case"
-START="/Temporary_Listen_Addresses/start"
-STOP="/Temporary_Listen_Addresses/stop"
+NEWCASE="/Temporary_Listen_Addresses/$REMOTEUID/case"
+START="/Temporary_Listen_Addresses/$REMOTEUID/start"
+STOP="/Temporary_Listen_Addresses/$REMOTEUID/stop"
 DIVISOR="/"
 
 STARTDIR=`pwd`
