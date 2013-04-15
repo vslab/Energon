@@ -329,7 +329,8 @@ function callStop {
 }
 
 function experiment {
-  for m in 1 4 16 64 256 1024 ; do
+  #for m in 1 4 16 64 256 1024 ; do
+  for m in 16 32 48 64 80 96 112 128 ; do
     i=0
     INSIZE=$[m*1024*1024]
     newCase
