@@ -18,7 +18,7 @@
 *)
 
 open System
-open Microsoft.FSharp.Data.TypeProviders
+//open Microsoft.FSharp.Data.TypeProviders
 open System.Data.Linq.SqlClient
 open System.Linq
 open Microsoft.FSharp.Linq

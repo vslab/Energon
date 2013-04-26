@@ -2,22 +2,14 @@
 #r @"Energon.Measuring.dll"
 open Energon.Measuring
 
-
 #r @"Energon.Storage.dll"
 //#r @"C:\Users\Davide\Desktop\Projects\Energon\Storage\bin\Debug\Energon.Measurement.dll"
 //#r @"C:\Users\Davide\Desktop\Projects\Energon\SqlCompactDb\Measurement\bin\Debug\Energon.Measurement.dll"
 
-
-
-#r "Energon.SQLCE.dll"
-
 #r "SQLExpress.dll"
-
 #r "System.Data.Linq.dll"
 #r "System.Linq.dll"
-
 #r "FSharp.PowerPack.Linq.dll"
-
 #r "System.Data.DataSetExtensions.dll"
 #r "System.Core.dll"
 
@@ -26,25 +18,10 @@ open System.Data.Linq.SqlClient
 open System.Linq
 open Microsoft.FSharp.Linq
 open System.Data.Linq
-
 open Energon.Measuring
 open System.Text
-open System.Data.DataSetExtensions
+//open System.Data.DataSetExtensions
 let dbfile = @"C:\Users\root\Desktop\Energon\Measurements.sdf"
-
-// ------ remote experiment
-
-//#r "Energon.Extech.dll"
-
-//open Energon.Extech380803
-
-//let extechAmp = new Energon.Extech380803.Extech380803Sensor("extechAmp", DataType.Ampere, 1.0)
-//let extechWatt = new Energon.Extech380803.Extech380803Sensor("extechWatt", DataType.Watt, 1.0)
-//let extechPF = new Energon.Extech380803.Extech380803Sensor("extechPF", DataType.PowerFactor, 1.0)
-//let extechV = new Energon.Extech380803.Extech380803Sensor("extechV", DataType.Volt, 1.0)
-//extechWatt.Start()
-//extechWatt.CurrValue()
-//extechWatt.Stop()
 
 
 #r @"Energon.Phidgets.dll"
@@ -58,7 +35,12 @@ let phidgetAmmeter = new AmmeterSensor("PhidgetsVA", 0, ifkit, 10.)
 //let sensors = [| new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 //let sensors = [| extechWatt :> GenericSensor; new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 let sensors = [| phidgetAmmeter :> GenericSensor; new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
-let sensors = [| new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
+let sensors = [| new RemoteSensor("cpu-cycles", DataType.Unknown) :> GenericSensor; 
+                new RemoteSensor("cache-references", DataType.Unknown) :> GenericSensor; 
+                new RemoteSensor("cache-misses", DataType.Unknown) :> GenericSensor; 
+                new RemoteSensor("branch-instructions", DataType.Unknown) :> GenericSensor; 
+                new RemoteSensor("branch-misses", DataType.Unknown) :> GenericSensor; 
+                new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 
 let sensors = [| phidgetAmmeter :> GenericSensor; new RemoteSensor("faults", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 
@@ -69,18 +51,22 @@ let sensors = [| new RemoteSensor("faults", DataType.Unknown) :> GenericSensor; 
 //let sensors = [|extechAmp :> GenericSensor; extechWatt :> GenericSensor; extechPF :> GenericSensor; extechV :> GenericSensor; r1 :> GenericSensor |]
 //let sensors = [| r1 :> GenericSensor |]
 
+
 // DEBUG
 open Energon.Measuring.Remote
 
 // iozone
 let e = new Experiment("iozone_ubuntu32kvm_load4", sensors, 0, [| "prog"; "size" |], [||], fun _ -> ())
 
-let system = "sl64kvm_256RAM_loadHeap8"
+let system = "sl64kvm_256RAM_loadHeap16"
 let system = "ATOM_OptiPlex"
+let system = "Vostro_Ubuntu64"
+let system = "armv71_tegra"
 
 // db helper
-let server = "HPLAB\SQLEXPRESS"
-let dbname = "Measure"
+//let server = "HPLAB\SQLEXPRESS"
+let server = "MANDARINO\MISURATORE"
+let dbname = "Measures"
 
 let createExp (prog:string) (system:string) =
   new Experiment(System.String.Format("{0}_{1}", prog, system), sensors, 0, [| "size" |], [||], fun _ -> ())
@@ -92,46 +78,49 @@ let createAndStartExp prog sys =
 
 
 let e = createAndStartExp "quick" system
+e.Start ()
+e.Stop()
+
 let e = createAndStartExp "merges" system
+e.Start()
+e.Stop()
+
 let e = createAndStartExp "randMemAccess" system
+e.Start()
+e.Stop()
+
 let e = createAndStartExp "simpleINT" system
+e.Start()
+e.Stop()
+
 let e = createAndStartExp "simpleFPU" system
+e.Start()
+e.Stop()
 
 let e = createAndStartExp "pi" system
+e.Start()
+e.Stop()
 
 let e = createAndStartExp "heap" system
+e.Start()
+e.Stop()
 
 
 //let e = new Experiment("test_linux", sensors, 0, [| "size" |], [||], fun _ -> ())
 
 
 e.Start()
-
 e.Stop()
 
+// --------------------- ANALYSE ------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#I @"C:\Users\root\Desktop\Energon\bin\Debug"
 #r @"Energon.Measuring.dll"
 #r @"Energon.Storage.dll"
 #r "System.Data.Linq.dll"
 #r "System.Linq.dll"
 
 #r "FSharp.PowerPack.Linq.dll"
-#r "FSharp.Data.TypeProviders.dll"
+//#r "FSharp.Data.TypeProviders.dll"
 
 #r "System.Data.DataSetExtensions.dll"
 #r "System.Core.dll"
@@ -139,7 +128,7 @@ e.Stop()
 
 open Energon.Storage
 open System
-open Microsoft.FSharp.Data.TypeProviders
+//open Microsoft.FSharp.Data.TypeProviders
 open System.Data.Linq.SqlClient
 open System.Linq
 open Microsoft.FSharp.Linq
@@ -172,13 +161,13 @@ type HandySensor () as self =
         with get() = stddev
         and set(v) = stddev <- v
 
-let server = "HPLAB\SQLEXPRESS"
-let database = "Measure"
+let server = "MANDARINO\MISURATORE"
+let database = "Measures"
 
 let getConStr = 
         //let conStr = System.String.Format("server='{0}';database='{1}';User Id='{2}';password='{3}';", server, database, user, password) in
         let conStr = System.String.Format("Data Source={0};Initial Catalog={1};Integrated Security=SSPI;", server, database) in
-        conStr
+                conStr
 let GetLinqContext = 
         let context = new SQLExpress.Measure(getConStr)
         if (context.DatabaseExists() = false) then
@@ -194,6 +183,7 @@ let cases exp = Seq.collect (fun (e:Experiments) -> db.ExperimentCases.Where(fun
 
 let getAveragesForCase case =
     db.AvgMeasures.Where(fun (a:AvgMeasures) -> (a.Experiment_case_id = case)).OrderBy(fun x -> x.Sensor_class_id)
+
 let ts = getAveragesForCase 3416
 Seq.map (fun (a:AvgMeasures) -> System.Console.WriteLine("{0}", a.SensorName)) ts
 
@@ -235,6 +225,15 @@ let caseToAveragesNoJ caseid =
     let response = Seq.map (fun (a:AvgMeasures) -> a.Average.Value) filtered
     response
 
+let caseToAveragesNoJNoBranch caseid =
+    let avgs = getAveragesForCase caseid
+    //let filtered = avgs.Where(fun (a:AvgMeasures) -> a.Sensor_class_id <> WsensorID && a.Sensor_class_id <> otherWsensor)
+    let filtered = avgs.Where(fun (a:AvgMeasures) -> a.Sensor_class_id <> WsensorID && a.Sensor_class_id <> otherWsensor && a.Sensor_class_id <> 90 && a.Sensor_class_id <> 91 && a.Sensor_class_id <> 95 && a.Sensor_class_id <> 86 && a.Sensor_class_id <> 88)
+    let response = Seq.map (fun (a:AvgMeasures) -> a.Average.Value) filtered
+    response
+
+let caseToAveragesFinal = caseToAveragesNoJNoBranch
+
 // print sensornames
 //let caseid = 3206
 //Seq.iter (fun (c:AvgMeasures) -> System.Console.WriteLine("{0}:{1}:{2}",c.Sensor_class_id, c.SensorName, c.Average.Value)) ( getAveragesForCase caseid)
@@ -247,7 +246,7 @@ let caseToAveragesNoJ caseid =
 open GlpkProxy
 
 let getProgAverages (list:seq<int>) =
-    Seq.fold (fun (state:seq<float>) (id:int) -> Seq.append state (caseToAveragesNoJ id)) Seq.empty<float> list
+    Seq.fold (fun (state:seq<float>) (id:int) -> Seq.append state (caseToAveragesFinal id)) Seq.empty<float> list
 let getTestBedAverages (list:seq<int array>) =
     Seq.map (fun (l:int array) -> getProgAverages l) list    
 let getTestBedAveragesArrays (list:seq<int array>) =
@@ -341,15 +340,28 @@ let printSplitups (progname:string) listOfTargets  (s:SplitupFinder) columnsName
         else
             System.Console.WriteLine("could not find splitup")
     Seq.iter findSplitup listOfTargets
-    let filename = String.Format(@"C:\Users\root\Desktop\Energon\data\splitups{0}.csv", progname)
+    let filename = String.Format(@"C:\Users\davide\Documents\GitHub\Energon\data\thrash\splitups{0}.csv", progname)
     System.IO.File.WriteAllText(filename, sbSplitups.ToString())
-    let filename2 = String.Format(@"C:\Users\root\Desktop\Energon\data\estimations{0}.csv", progname)
+    let filename2 = String.Format(@"C:\Users\davide\Documents\GitHub\Energon\data\thrash\estimations{0}.csv", progname)
     System.IO.File.WriteAllText(filename2, sbEstimations.ToString())
     Console.WriteLine(String.Format(@"---- done processing {0}", progname))
 
+let getSplitups (progname:string) listOfTargets  (s:SplitupFinder) =
+    let findSplitup target =
+        let progname = (getProgNamesAndArgs [| target |]).First()
+        let p = new Program()
+        p.Measures <- (caseToAveragesFinal target ).ToArray()
+        s.Target <- p
+        if (s.FindSplitup()) then
+            s.Splitup
+        else
+            [| -1.0 |]
+    Seq.map findSplitup listOfTargets
 
-
-// ---------------------------- ONLY LINUX64 LINUX --------------------------------------
+let predictConsumption listOfTargets splitups casesTestbed =
+    let zipped = Seq.zip listOfTargets splitups
+    let calcEst (target,splitup) = getEstimationError target casesTestbed splitup
+    Seq.map calcEst zipped
 
 let create_exp_case (basecase:int[]) i =
     [| basecase.[0]+i ; basecase.[1]+i |]
@@ -361,33 +373,108 @@ let create_exp_cases exp_base max =
     }
     Seq.toArray s
 
-let quick = create_exp_cases [| 3538; 3575 |] 5
-let merges = create_exp_cases [| 3544; 3581 |] 5
-let heap = create_exp_cases [| 3550; 3608 |] 5
+let getNth (l:seq<int[]>) n =
+    Seq.map (Seq.nth n) l
 
-let casesRandMemAccess =  [| 3557; 3589 |]
-let casesSimpleINT = [| 3458; 3474 |]
-let casesSimpleFPU = [| 3459; 3473|]
-let iozone_base = [| 3426; 3478 |]
-let create_iozone_case (basecase:int[]) i =
-    [| basecase.[0]+i ; basecase.[1]+i |]
-let iozone_cases = 
-    let s = seq {
-        for i in 0..12 do
-            yield create_iozone_case iozone_base i
-    }
-    Seq.toArray s
+let getNth2 (l:seq<int[]>) n =
+    Seq.map (fun (l2:int[]) -> [| Seq.nth n l2 |]) l
 
-let casesTestbed = [| casesRandMemAccess; casesSimpleINT; casesSimpleFPU |]
+
+
+// first arm then target system
+let quick = create_exp_cases [| 3717; 3662 |] 6
+let merges = create_exp_cases [| 3745; 3672 |] 6
+let heap = create_exp_cases [| 3735; 3684 |] 6
+
+let casesRandMemAccess =  [| 3743; 3681 |]
+let casesSimpleINT = [| 3744; 3682 |]
+let casesSimpleFPU = [| 3332; 3647|]
+
+let casesTestbed = [| casesRandMemAccess; casesSimpleINT |]
+//let casesTestbed = [| casesRandMemAccess; casesSimpleINT; casesSimpleFPU |]
 let columnsNames = getColumnsNames casesTestbed
 
 let s = new SplitupFinder()
-let testbedAvgs = getTestBedAverages casesTestbed
+let testbedAvgs = getTestBedAverages (getNth2 casesTestbed 0)
 s.Testbed <- (buildTestBed testbedAvgs)
 
+caseToAveragesNoJNoBranch 3717
+caseToAveragesNoJNoBranch 3718
 
-printSplitups "iozone" iozone_cases s columnsNames casesTestbed
+caseToAveragesNoJNoBranch 3719
+caseToAveragesNoJNoBranch 3720
+caseToAveragesNoJNoBranch 3721
+caseToAveragesNoJNoBranch 3722
 
+caseToAveragesNoJNoBranch 3743
+caseToAveragesNoJNoBranch 3744
+
+getSplitups "quick" [| 3718 |] s
+
+let stampalo id = 
+    caseToAveragesNoJNoBranch id |> Seq.iter ( fun x -> printf " %E " x)
+
+stampalo 3739
+
+let quickSplitupsArray = Seq.toArray (getSplitups "quick" (getNth quick 0) s)
+let mergesSplitupsArray = Seq.toArray (getSplitups "merges" (getNth merges 0) s)
+let heapSplitupsArray = Seq.toArray (getSplitups "heap" (getNth heap 0) s)
+
+let quickSplitups = getSplitups "quick" (getNth quick 0) s
+let mergesSplitups = getSplitups "merges" (getNth merges 0) s
+let heapSplitups = getSplitups "heap" (getNth heap 0) s
+
+let consumptionQuick = Seq.toArray (predictConsumption (getNth quick 1) quickSplitupsArray (getNth casesTestbed 1))
+let consumptionMerge = Seq.toArray (predictConsumption (getNth merges 1) mergesSplitupsArray (getNth casesTestbed 1))
+let consumptionHeap = Seq.toArray (predictConsumption (getNth heap 1) heapSplitupsArray (getNth casesTestbed 1))
+
+let printSplitup (progname:string) columns (splitups:seq<float []>) (listOfTargets:seq<int>) =
+    let sbSplitups = new System.Text.StringBuilder()
+    sbSplitups.Append("program;") |> ignore
+    sbSplitups.AppendLine(String.concat ";" (sanityzeStringSeq columnsNames))  |> ignore
+    let sbEstimations = new System.Text.StringBuilder()
+    sbEstimations.AppendLine("program;measured;estimated;error;perc")  |> ignore
+    let floatToStrings (l:seq<float>) =
+        let ni = new System.Globalization.NumberFormatInfo()
+        ni.NumberDecimalSeparator <- "."
+        ni.NumberGroupSeparator <-""
+        Seq.map (fun (f:float) -> f.ToString(ni) ) l
+    let findSplitup (target,splitup) =
+        let progname = (getProgNamesAndArgs [|target|]).First()
+        sbSplitups.AppendFormat("{0};", (sanityzeString progname)) |> ignore
+        sbSplitups.AppendLine(String.concat ";" (floatToStrings splitup))  |> ignore
+        printEstimations [| target |] casesTestbed splitup sbEstimations
+    let zipped = Seq.zip listOfTargets splitups
+    Seq.iter findSplitup zipped 
+    let filename = String.Format(@"C:\Users\davide\Documents\GitHub\Energon\data\thrash\splitups{0}.csv", progname)
+    System.IO.File.WriteAllText(filename, sbSplitups.ToString())
+    let filename2 = String.Format(@"C:\Users\davide\Documents\GitHub\Energon\data\thrash\estimations{0}.csv", progname)
+    System.IO.File.WriteAllText(filename2, sbEstimations.ToString())
+    Console.WriteLine(String.Format(@"---- done processing {0}", progname))
+
+printSplitup "quick" columnsNames quickSplitupsArray (getNth quick 1)
+printSplitup "merges" columnsNames mergesSplitupsArray (getNth merges 1)
+printSplitup "heap" columnsNames heapSplitupsArray (getNth heap 1)
+
+caseToAveragesNoJ 3636
+
+getSplitups "merges" [| 3321 |] s
+
+let avg0 = Seq.toArray (caseToAveragesNoJ 3322)
+let avg1 = Seq.toArray (caseToAveragesNoJ 3321)
+let avg2 = Seq.toArray (caseToAveragesNoJ 3320)
+let avg3 = Seq.toArray (caseToAveragesNoJ 3319)
+let avg4 = Seq.toArray (caseToAveragesNoJ 3318)
+let avg5 = Seq.toArray (caseToAveragesNoJ 3317)
+
+caseToAveragesNoJ 3629
+caseToAveragesNoJ 3630
+caseToAveragesNoJ 3631
+caseToAveragesNoJ 3632
+
+printSplitups "quick" quick s columnsNames casesTestbed
+printSplitups "merges" merges s columnsNames casesTestbed
+                                                                         
 // -------------- testbed using cpuspec ----------- 
 
 let distance l1 l2 =
@@ -525,3 +612,4 @@ let specCases5 = [| cases401; cases435; cases444; cases410; cases429; cases458; 
 printSplitups "CPUSPEC_cpuspec5" specCases5 s columnsNames casesTestbed
 
 columnsNames.ToArray()
+
