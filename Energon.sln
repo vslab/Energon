@@ -31,6 +31,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GlpkSharp", "GlpkSharp\Glpk
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlpkProxy", "GlpkSharp\proxy\GlpkProxy.csproj", "{4CED2B44-5B7A-48F7-B387-6131E191D09E}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CPUSpecImporter", "CPUSpecImporter\CPUSpecImporter\CPUSpecImporter.fsproj", "{040E2520-3DFE-4485-AE54-7AB45F604D81}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -223,6 +225,18 @@ Global
 		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Release|Win32.ActiveCfg = Release|Any CPU
 		{4CED2B44-5B7A-48F7-B387-6131E191D09E}.Release|x86.ActiveCfg = Release|Any CPU
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Debug|Win32.ActiveCfg = Debug|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Debug|x86.ActiveCfg = Debug|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Debug|x86.Build.0 = Debug|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Release|Any CPU.ActiveCfg = Release|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Release|Mixed Platforms.Build.0 = Release|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Release|Win32.ActiveCfg = Release|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Release|x86.ActiveCfg = Release|x86
+		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

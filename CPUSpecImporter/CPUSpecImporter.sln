@@ -1,7 +1,7 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "CPUSpecImporter", "CPUSpecImporter\CPUSpecImporter.fsproj", "{040E2520-3DFE-4485-AE54-7AB45F604D81}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CPUSpecImporter", "CPUSpecImporter\CPUSpecImporter.fsproj", "{040E2520-3DFE-4485-AE54-7AB45F604D81}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +13,9 @@ Global
 		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Debug|x86.Build.0 = Debug|x86
 		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Release|x86.ActiveCfg = Release|x86
 		{040E2520-3DFE-4485-AE54-7AB45F604D81}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = CPUSpecImporter\CPUSpecImporter.fsproj

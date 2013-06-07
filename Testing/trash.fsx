@@ -46,6 +46,8 @@ let sensors = [| phidgetAmmeter :> GenericSensor; new RemoteSensor("faults", Dat
 
 let sensors = [| new RemoteSensor("faults", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
 
+let sensors = [| new RemoteSensor("Perc Proc User Time", DataType.Unknown) :> GenericSensor; new RemoteSensor("Page Faults per sec", DataType.Unknown) :> GenericSensor; new RemoteSensor("seconds", DataType.Unknown) :> GenericSensor|]
+
 // declare a remote sensor
 
 //let sensors = [|extechAmp :> GenericSensor; extechWatt :> GenericSensor; extechPF :> GenericSensor; extechV :> GenericSensor; r1 :> GenericSensor |]
@@ -62,6 +64,7 @@ let system = "sl64kvm_256RAM_loadHeap16"
 let system = "ATOM_OptiPlex"
 let system = "Vostro_Ubuntu64"
 let system = "armv71_tegra"
+let system = "Vostro_win7"
 
 // db helper
 //let server = "HPLAB\SQLEXPRESS"
@@ -102,6 +105,10 @@ e.Start()
 e.Stop()
 
 let e = createAndStartExp "heap" system
+e.Start()
+e.Stop()
+
+let e = createAndStartExp "bubble" system
 e.Start()
 e.Stop()
 
@@ -228,7 +235,8 @@ let caseToAveragesNoJ caseid =
 let caseToAveragesNoJNoBranch caseid =
     let avgs = getAveragesForCase caseid
     //let filtered = avgs.Where(fun (a:AvgMeasures) -> a.Sensor_class_id <> WsensorID && a.Sensor_class_id <> otherWsensor)
-    let filtered = avgs.Where(fun (a:AvgMeasures) -> a.Sensor_class_id <> WsensorID && a.Sensor_class_id <> otherWsensor && a.Sensor_class_id <> 90 && a.Sensor_class_id <> 91 && a.Sensor_class_id <> 95 && a.Sensor_class_id <> 86 && a.Sensor_class_id <> 88)
+    //let filtered = avgs.Where(fun (a:AvgMeasures) -> a.Sensor_class_id <> WsensorID && a.Sensor_class_id <> otherWsensor && a.Sensor_class_id <> 90 && a.Sensor_class_id <> 91 && a.Sensor_class_id <> 95 && && a.Sensor_class_id <> 88 )
+    let filtered = avgs.Where(fun (a:AvgMeasures) -> a.Sensor_class_id <> WsensorID && a.Sensor_class_id <> otherWsensor && a.Sensor_class_id <> 90 && a.Sensor_class_id <> 91 && a.Sensor_class_id <> 95 && a.Sensor_class_id <> 88 && a.Sensor_class_id <> 86 )
     let response = Seq.map (fun (a:AvgMeasures) -> a.Average.Value) filtered
     response
 
@@ -382,15 +390,36 @@ let getNth2 (l:seq<int[]>) n =
 
 
 // first arm then target system
-let quick = create_exp_cases [| 3717; 3662 |] 6
-let merges = create_exp_cases [| 3745; 3672 |] 6
-let heap = create_exp_cases [| 3735; 3684 |] 6
+let quick = create_exp_cases [| 3717; 3753 |] 6
+let merges = create_exp_cases [| 3745; 3760 |] 6
+let heap = create_exp_cases [| 3735; 3770 |] 6
 
-let casesRandMemAccess =  [| 3743; 3681 |]
-let casesSimpleINT = [| 3744; 3682 |]
-let casesSimpleFPU = [| 3332; 3647|]
+let casesRandMemAccess =  [| 3743; 3767 |]
+let casesSimpleINT = [| 3744; 3768 |]
+let casesSimpleFPU = [| 3332; 3769|]
 
-let casesTestbed = [| casesRandMemAccess; casesSimpleINT |]
+let casesIozone0 = [| 3804; 3778|]
+let casesIozone1 = [| 3805; 3779|]
+let casesIozone2 = [| 3806; 3780|]
+let casesIozone3 = [| 3807; 3781|]
+let casesIozone4 = [| 3808; 3782|]
+let casesIozone5 = [| 3809; 3783|]
+let casesIozone6 = [| 3810; 3784|]
+let casesIozone7 = [| 3811; 3785|]
+let casesIozone8 = [| 3812; 3786|]
+let casesIozone9 = [| 3813; 3787|]
+let casesIozone10 = [| 3814; 3788|]
+let casesIozone11 = [| 3815; 3789|]
+let casesIozone12 = [| 3816; 3790|]
+
+let iozone = create_exp_cases casesIozone0 12
+
+//let casesTestbed = [| casesRandMemAccess; casesSimpleINT|]
+//let casesTestbed = [| casesRandMemAccess; casesSimpleINT; [|3746; 3761 |] |]
+//let casesTestbed = [| casesSimpleINT; casesSimpleFPU; [|3746; 3761 |] |]
+let casesTestbed = [| casesSimpleINT; casesSimpleFPU; [|3746; 3761 |]; casesIozone1 |]
+//let casesTestbed = [|  casesSimpleINT; [|3746; 3761 |] |]
+//let casesTestbed = [|  casesSimpleFPU; [|3746; 3761 |] |]
 //let casesTestbed = [| casesRandMemAccess; casesSimpleINT; casesSimpleFPU |]
 let columnsNames = getColumnsNames casesTestbed
 
@@ -398,35 +427,23 @@ let s = new SplitupFinder()
 let testbedAvgs = getTestBedAverages (getNth2 casesTestbed 0)
 s.Testbed <- (buildTestBed testbedAvgs)
 
-caseToAveragesNoJNoBranch 3717
-caseToAveragesNoJNoBranch 3718
-
-caseToAveragesNoJNoBranch 3719
-caseToAveragesNoJNoBranch 3720
-caseToAveragesNoJNoBranch 3721
-caseToAveragesNoJNoBranch 3722
-
-caseToAveragesNoJNoBranch 3743
-caseToAveragesNoJNoBranch 3744
-
-getSplitups "quick" [| 3718 |] s
-
-let stampalo id = 
-    caseToAveragesNoJNoBranch id |> Seq.iter ( fun x -> printf " %E " x)
-
-stampalo 3739
+caseToAveragesFinal 3717
 
 let quickSplitupsArray = Seq.toArray (getSplitups "quick" (getNth quick 0) s)
 let mergesSplitupsArray = Seq.toArray (getSplitups "merges" (getNth merges 0) s)
 let heapSplitupsArray = Seq.toArray (getSplitups "heap" (getNth heap 0) s)
 
-let quickSplitups = getSplitups "quick" (getNth quick 0) s
-let mergesSplitups = getSplitups "merges" (getNth merges 0) s
-let heapSplitups = getSplitups "heap" (getNth heap 0) s
+let iozoneSplitupsArray = Seq.toArray (getSplitups "iozone" (getNth iozone 0) s)
+
+//let quickSplitups = getSplitups "quick" (getNth quick 0) s
+//let mergesSplitups = getSplitups "merges" (getNth merges 0) s
+//let heapSplitups = getSplitups "heap" (getNth heap 0) s
 
 let consumptionQuick = Seq.toArray (predictConsumption (getNth quick 1) quickSplitupsArray (getNth casesTestbed 1))
 let consumptionMerge = Seq.toArray (predictConsumption (getNth merges 1) mergesSplitupsArray (getNth casesTestbed 1))
 let consumptionHeap = Seq.toArray (predictConsumption (getNth heap 1) heapSplitupsArray (getNth casesTestbed 1))
+
+let consumptionIozone = Seq.toArray (predictConsumption (getNth iozone 1) iozoneSplitupsArray (getNth casesTestbed 1))
 
 let printSplitup (progname:string) columns (splitups:seq<float []>) (listOfTargets:seq<int>) =
     let sbSplitups = new System.Text.StringBuilder()
