@@ -16,7 +16,10 @@ to compile on linux just run make
 to compile on windows run compile.bat from the visual studio command line
 
 
-iozone
+to compile iozone do:
 sudo su -
 wget http://www.iozone.org/src/current/iozone3_414.tar
 tar xvf iozone3_414.tar
+cd /root/iozone3_414/src/current
+make linux
+

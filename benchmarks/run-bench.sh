@@ -31,6 +31,13 @@ declare -a perfcounters
 # results
 declare -a res
 
+perfver=`perf --version`
+perfpipe="2"
+# perf version 3...
+if [[ "$perfver" =~ ^perf\ version\ 2.* ]]; then
+    echo "perf version 2 detected"
+    perfpipe="0"
+fi
 
 function printAvailablePerfCounters {
   echo "Available performance counters are: ${availPerfCounters[@]}"
@@ -237,7 +244,7 @@ function parseOutput {
 # run the program...
 function runProgram {
   echo "running perf stat $PERFARGS $PROGR $INSIZE ..."
-  perfout=`perf stat $PERFARGS $PROGR $INSIZE 2>&1`
+  perfout=`perf stat $PERFARGS $PROGR $INSIZE $perfpipe>&1`
   # parse the output of perf stat
   parseOutput
   echo "$PROGR $INSIZE terminated"
@@ -329,7 +336,8 @@ function callStop {
 }
 
 function experiment {
-  for m in 1 4 16 64 256 1024 ; do
+  #for m in 1 4 16 64 256 1024 ; do
+  for m in 16 32 48 64 80 96 112 128 ; do
     i=0
     INSIZE=$[m*1024*1024]
     newCase
