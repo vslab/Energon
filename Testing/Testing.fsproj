@@ -44,6 +44,7 @@
     <None Include="virtualmachines.fsx" />
     <None Include="test.fsx" />
     <None Include="trash.fsx" />
+    <None Include="CPUSPEC2006.fsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Extech\Extech.fsproj">
