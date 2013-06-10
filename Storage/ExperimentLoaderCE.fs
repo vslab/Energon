@@ -41,8 +41,7 @@ let ExperimentLoaderCE(expID:int, file:string) =
         let sensArray = sensors.ToArray()
         let sens = sensArray.Where(fun (x:DatabaseSensor) -> x.ID = s.Id)
         if (sens.Count() > 0) then
-            let newSens = new DatabaseSensor(s.SensorName)
-            newSens.ID <- s.Id
+            let newSens = new DatabaseSensor(s.SensorName, s.Id)
             sensors.Add(newSens)
             newSens
         else
@@ -61,8 +60,7 @@ let ExperimentLoaderCE(expID:int, file:string) =
         let sensRes = sensors.Where(fun (x:DatabaseSensor) -> x.ID = s.Sensor_class_id)
         if (sensRes.Count() = 0) then
             let cl = sensorToSensorClass s
-            let newSens = new DatabaseSensor(cl.SensorName)
-            newSens.ID <- cl.Id
+            let newSens = new DatabaseSensor(cl.SensorName, cl.Id)
             sensors.Add(newSens)
 
     runseqseq |> Seq.iter (fun (runseq:seq<ExperimentRuns>) -> 
@@ -71,18 +69,18 @@ let ExperimentLoaderCE(expID:int, file:string) =
                 Seq.iter handleSensors sensseq
             )
         )  
-    let exp = new DatabaseExperiment(dbExperiment.Name, sensors, dbExperiment.Iter.Value, Seq.empty, Seq.empty)
+    let exp = new DatabaseExperiment(dbExperiment.Name, sensors, dbExperiment.Iter.Value, Seq.empty, Seq.empty, expID)
     let sensorSeq = seq {
             for s in sensors do yield s:>GenericSensor
         }
     dbCases |> Seq.iter (fun (x:ExperimentCases) ->
             let split = [";"].ToArray()
             let args = x.Args.Split(split, StringSplitOptions.RemoveEmptyEntries)
-            let c = new DatabaseExperimentCase(sensorSeq, exp.IterCount,  args |> Seq.map (fun x -> x :> obj) )
+            let c = new DatabaseExperimentCase(sensorSeq, exp.IterCount,  args |> Seq.map (fun x -> x :> obj) , x.Id)
             exp.ExperimentCases.Add(c)
             let dbRuns = runsOfCase x
             dbRuns |> Seq.iter ( fun (r:ExperimentRuns) ->
-                let run = new DatabaseExperimentRun(sensorSeq)
+                let run = new DatabaseExperimentRun(sensorSeq, r.Id)
                 c.ExperimentRuns.Add(run)
 
             )

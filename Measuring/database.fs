@@ -6,8 +6,10 @@ open Energon.Measuring
 
 
 /// a sensors, not usable, just a dummy representation from rthe database
-type DatabaseSensor(name:string) = 
+type DatabaseSensor(name:string, id:int) as self = 
     inherit GenericSensor(name, DataType.Unknown)
+    do
+      self.ID <- id
 
     override x.Start() =
         raise (System.InvalidOperationException())
@@ -26,8 +28,10 @@ type DatabaseSensor(name:string) =
 
 
 /// a database run read from database
-type DatabaseExperimentRun(sensors:seq<GenericSensor>) =
+type DatabaseExperimentRun(sensors:seq<GenericSensor>, id:int) as self =
     inherit ExperimentRun(sensors)
+    do
+      self.ID <- id
 
     let mutable startTime = DateTime.Now
     let mutable endTime = DateTime.Now
@@ -51,8 +55,10 @@ type DatabaseExperimentRun(sensors:seq<GenericSensor>) =
 
 
 
-type DatabaseExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>) =
+type DatabaseExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>, id:int) as self =
     inherit ExperimentCase(sensors, iter, args, (fun (x:seq<obj>) -> ()))
+    do
+      self.ID <- id
 
     let experimentRuns = List<DatabaseExperimentRun>()
 
@@ -76,10 +82,12 @@ type DatabaseExperimentCase(sensors:seq<GenericSensor>, iter:int, args:seq<obj>)
         with get() = raise (System.NotImplementedException())
 
 
-type DatabaseExperiment(name:string, sensors:seq<DatabaseSensor>, iter:int, argNames:seq<string>, args:seq<seq<obj>>) =
+type DatabaseExperiment(name:string, sensors:seq<DatabaseSensor>, iter:int, argNames:seq<string>, args:seq<seq<obj>>, id:int) as self=
     inherit Experiment(name, Seq.map (fun (x:DatabaseSensor) -> x :> GenericSensor) sensors, iter, argNames, args, (fun (x:seq<obj>) -> ()))
+    do
+      self.ID <- id
 
-    let experimentCases = new List<ExperimentCase>()
+    let experimentCases = new List<DatabaseExperimentCase>()
 
     member x.ExperimentCases
         with get() = experimentCases
