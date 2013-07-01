@@ -29,6 +29,8 @@ open SQLExpress
 let server = "MANDARINO\MISURATORE"
 let dbname = "Measures"
 
+
+
 // ------------------------ SAVE TO DB ----------------------
 
 let system = "ImportedFromSpecWebsite"
@@ -157,6 +159,10 @@ Seq.iter savePrograms run_clean
 // ------------------------ SAVE TO DB ----------------------
 
 
+
+
+// ------------------------ SIMILARITY ----------------------
+
 open System
 
 let norm (a:float[]) =
@@ -176,7 +182,47 @@ let angleBetweenVectors a b =
 //cosineSimilarity [| 1.0; 1.0 |] [| -1.0; 1.0 |]
 //angleBetweenVectors [| 1.0; 1.0 |] [| 2.0; 1.0 |]
 
+// given 2 arrays on N values, it builds N vectors of 2 dimesions, checks the angle between each, and return the larges angle, with indices
+// so, given the measures of 2 programs, it will tell you which couple of resources should be used to get the testbed later on
 let resourceSimilarity (a:float[]) (b:float[]) =
+  let zipped = Array.zip a b
+  let mutable maxAngle = 0.0
+  let mutable besti = 0
+  let mutable bestj = 0
+  for i in 0..(zipped.Length - 1) do
+    for j in i..(zipped.Length - 1) do
+      let a1, b1 = zipped.[i]
+      let a2, b2 = zipped.[j]
+      let a = [| a1; a2|]
+      let b = [| b1; b2|]
+      let alpha = angleBetweenVectors (a) (b)
+      if alpha > maxAngle then
+        maxAngle <- alpha
+        besti <- i
+        bestj <- j
+  (maxAngle, besti, bestj)
+
+// given the measures of N programs, it tells you which resources (first 2 indices) and which programs (last 2 indices) 
+// should be used to build the splitup
+let findMax2 (programs:float[][]) = 
+  let mutable maxAngle = 0.0
+  let mutable besti = 0
+  let mutable bestj = 0
+  let mutable bestprogi = 0
+  let mutable bestprogj = 0
+  let l = programs.GetLength(0)
+  for i in 0..(l - 2) do
+    for j in 0..(l - 1) do
+      let ang, thisi, thisj = resourceSimilarity (programs.[i]) (programs.[j])
+      if ang > maxAngle then
+        maxAngle <- ang
+        besti <- i
+        bestj <- j
+        bestprogi <- thisi
+        bestprogj <- thisj
+  (maxAngle, besti, bestj, bestprogi, bestprogj)
+
+let resourceSimilarityFixedBase (a:float[]) (b:float[])  =
   let zipped = Array.zip a b
   let mutable maxAngle = 0.0
   let mutable besti = 0
@@ -194,22 +240,20 @@ let resourceSimilarity (a:float[]) (b:float[]) =
         bestj <- j
   (maxAngle, besti, bestj)
 
-let R1 = [| 1.0; 1.0 |]
-let R2 = [| 1.0; 2.0 |]
-let R3 = [| 0.0; 2.0 |]
 
-let resources = [| R1; R2; R3 |]
-
-let findMax (resources:float[][]) = 
+// ------------- TODO ----------------
+// given a set of measurements programs 
+let findMaxN (programs:float[][]) (basis_indices:int[]) = 
   let mutable maxAngle = 0.0
   let mutable besti = 0
   let mutable bestj = 0
   let mutable bestprogi = 0
   let mutable bestprogj = 0
-  let l = resources.GetLength(0)
-  for i in 0..(l - 2) do
-    for j in 0..(l - 1) do
-      let ang, thisi, thisj = resourceSimilarity (resources.[i]) (resources.[j])
+  let rl = programs.GetLength(0)
+  let bl = basis.GetLength(0)
+  for i in 0..(rl - 1) do
+    for j in 0..(bl - 1) do
+      let ang, thisi, thisj = resourceSimilarity (programs.[i]) (basis.[j])
       if ang > maxAngle then
         maxAngle <- ang
         besti <- i
@@ -220,8 +264,34 @@ let findMax (resources:float[][]) =
 
 
 
+// -------------------- Prediction Error -----------------
+// returns the prediction error of a target program wrt a resource, using a splitup passed as argument
+// outputs: measured value, predicted, error, error as a percentage
+// input are:
+// splitup: the splitup of the target program
+// basis: the indices of the basis in the resource array, they need to be in the same order as the splitup
+// target: the index of the target program in the resource array
+// resource: measurements of a resource, one float for every program
+let predictionError (splitup:float[]) (basis:int[]) (target:int) (resource:float[]) =
+    let measured = resource.[target]
+    let zipped = Array.zip splitup basis
+    let predicted = Array.fold (fun (s:float) (split:float, i:int) -> s + resource.[i] * split) 0.0 zipped
+    let error = System.Math.Abs(predicted-measured)
+    measured, predicted, error, error / measured
+
+let predictionErrors (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
+    Array.map (predictionError splitup basis target) resources
+
+// given the splitup of a target program and an array of resources, returns the average prediction error and std dev
+let progErr (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
+    let errors = Array.map (fun (m:float,pred:float,err:float,perc:float) -> perc) (predictionErrors splitup basis target resources)
+    let average = errors.Average()
+    let sum = Array.fold (fun (s:float) (v:float) -> s + (v-average) * (v-average) ) 0.0 errors
+    let c = float (errors.Count())
+    average, System.Math.Sqrt(sum / c )
 
 
+// --------------------------------------------------
 
 
 let getConStr = 
@@ -238,12 +308,180 @@ let db =
     context.Connection.Open()
     context
 
-let limite = 10
+let limite = 130
 let misure_all = db.Measures.Where(fun (m:Measures) -> m.ExperimentID >= 319 && m.ExperimentID < (319 + limite*12)).OrderBy(fun m -> m.ExperimentID) |> Seq.toList 
-let misure_f = misure_all|> Seq.map (fun (m:Measures) -> (m.ExperimentID - 319)/12, m.AverageValue.Value)  |> Seq.groupBy fst |> Seq.map (fun (_,x) -> Seq.map snd x |> Seq.toList)
+let misure_f = misure_all|> Seq.map (fun (m:Measures) -> (m.ExperimentID - 319)/12, m.AverageValue.Value)  |> Seq.groupBy fst |> Seq.map (fun (_,x) -> Seq.map snd x |> Seq.toArray)
+let misure_array = Seq.toArray misure_f
+
+let findUrl i = 
+    db.Experiments.Where(fun (e:Experiments) -> e.Id = 319 + i*12).First().Note
 
 
 
+#r "GlpkProxy.dll"
+open GlpkProxy
+
+//// returns the measured, estimated, error and error as a percentage 
+//let getEstimationErrorOnSystem (measured:float) (splitup:float[]) (testbed:float[]) =
+//    let estimated = Seq.fold (fun (s:float) (a:float,b:float) -> s + a*b) 0.0 (Seq.zip splitup testbed)
+//    let difference = Math.Abs(estimated - measured)
+//    let percentage = difference / measured
+//    measured, estimated, difference, percentage
+//
+//// returns the average estimation error, standard deviation, max error and index of max error
+//let getEstimationError (measured:float[]) (splitup:float[]) (testbed:float[][]) =
+//    let measures = Seq.zip measured testbed
+//    let estimations = Seq.map (fun (m,t) -> getEstimationErrorOnSystem m splitup t) measures |> Seq.cache
+//    let sum, count = Seq.fold (fun (s,i) (m,e,d,p) -> (s + p, i+1.0)) (0.0, 0.0) estimations
+//    let average = sum / count
+//    let sum2, count2 = Seq.fold (fun (s,i) (m,e,d,p) -> (s + (average - p) * (average - p), i+1.0)) (0.0, 0.0) estimations
+//    let average2 = sum2 / count2
+//    let stddev = Math.Sqrt(average2)
+//    let selMax (maximum:float,i:int,maxi:int) (e:float,m:float,d:float,p:float) = if p > maximum then (p, i+1, i) else (maximum, i+1, maxi)
+//    let maximum, i, maxi = Seq.fold selMax (0.0,0,0) estimations
+//    average, stddev, maximum, maxi
+
+// finds a program's splitup, splitupfinder needs to have the testbed already set
+let getSplitup measures  (s:SplitupFinder) =
+    let p = new Program()
+    p.Measures <- measures
+    s.Target <- p
+    if (s.FindSplitup()) then
+        s.Splitup
+    else
+        [|  |]
+
+// ---------- testbed size = 1 ------------------
+
+// just pick a random program as the tested
+let rand = new System.Random()
+let chosenProg = rand.Next(0, 12)
+let chosenSystem = rand.Next(0, misure_array.Length)
+let chosenMeasures = misure_array.[chosenSystem]
+// the splitups are just the ratio..
+let energon = chosenMeasures.[chosenProg]
+let splitup1 = Array.map (fun v -> v/energon) chosenMeasures
+
+let measuresWithoutSelectedResources skip_index = 
+    let f,i = Array.fold (fun (ret:float[][], i) (x:float[]) -> if i = skip_index then ret, i+1 else Array.append ret [| x |], i+1 ) ([| |], 0) misure_array
+    f
+
+let otherMeasures = measuresWithoutSelectedResources chosenSystem
+
+// given the splitup of a target program and an array of resources, returns the average prediction error and std dev
+//let progErr (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
+let getIthErr1 i =
+    let s1 = [| splitup1.[i] |]
+    progErr s1 [| chosenProg |] i otherMeasures
+
+getIthErr1 0
+
+let avgErr1 = 
+    let sum = Seq.init 12 (fun i -> i) |> Seq.fold (fun (s:float) (i:int) -> 
+        if i <> chosenProg then s + fst (getIthErr1 i) else s ) 0.0
+    let c = float 11
+    sum / c
+
+
+
+
+
+//
+//
+
+//
+////getEstimationErrorOnSystem (measured:float) (splitup:float[]) (testbed:float[]) =
+//// getEstimationError (measured:float[]) (splitup:float[]) (testbed:float[][])
+//let getErrors = seq {
+//    let only i = Array.map (fun (x:float[]) -> x.[i]) misure_array
+//    for i in 0..11 do
+//        yield getEstimationError (only i) splitup1 [| (only chosenProg) |]
+//    }
+//let errorsArray = Seq.toArray getErrors       
+
+
+// ---------- testbed size 2, use max angle -------------
+
+// first 2 resources and programs
+let angle, r1, r2, p1, p2 = findMax2 misure_array
+
+let url_r1 = findUrl r1
+let url_r2 = findUrl r2
+
+let chosen_res_array = Array.rev (Array.sort [| r1; r2 |])
+let skipped1 = measuresWithoutSelectedResources chosen_res_array.[0]
+let otherMeasures2 = measuresWithoutSelectedResources chosen_res_array.[1]
+let res1 = misure_array.[r1]
+let res2 = misure_array.[r2]
+let progP1 = new Program()
+progP1.Measures <- [| res1.[p1]; res2.[p1] |]
+let progP2 = new Program()
+progP2.Measures <- [| res1.[p2]; res2.[p2] |]
+let s = new SplitupFinder()
+s.Testbed <- [| progP1; progP2 |]
+
+let findSplitup2 i =
+    let p = new Program()
+    p.Measures <- [| res1.[i]; res2.[i] |] // risorse relative al programma
+    s.Target <- p
+    if s.FindSplitup() then
+        s.Splitup
+    else
+        [|0.0; 0.0 |]
+
+let getIthErr2 i =
+    let s1 = findSplitup2 i
+    progErr s1 [| p1; p2 |] i otherMeasures2
+
+let avgErr2 = 
+    let sum = Seq.init 12 (fun i -> i) |> Seq.fold (fun (s:float) (i:int) -> 
+        if i <> p1 && i <> p2 then 
+            s + fst (getIthErr2 i)
+        else s) 0.0
+    let c = float 10
+    sum / c
+
+
+
+
+    // TODO
+// ---------- testbed size 3, use max angle -------------
+
+// first 2 resources and programs
+let angle, r1, r2, p1, p2 = findMax2 misure_array
+
+let url_r1 = findUrl r1
+let url_r2 = findUrl r2
+
+let chosen_res_array = Array.rev (Array.sort [| r1; r2 |])
+let skipped1 = measuresWithoutSelectedResources chosen_res_array.[0]
+let otherMeasures2 = measuresWithoutSelectedResources chosen_res_array.[1]
+let res1 = misure_array.[r1]
+let res2 = misure_array.[r2]
+let progP1 = new Program()
+progP1.Measures <- [| res1.[p1]; res2.[p1] |]
+let progP2 = new Program()
+progP2.Measures <- [| res1.[p2]; res2.[p2] |]
+let s = new SplitupFinder()
+s.Testbed <- [| progP1; progP2 |]
+
+let findSplitup2 i =
+    let p = new Program()
+    p.Measures <- [| res1.[i]; res2.[i] |] // risorse relative al programma
+    s.Target <- p
+    if s.FindSplitup() then
+        s.Splitup
+    else
+        [|0.0; 0.0 |]
+
+let getIthErr2 i =
+    let s1 = findSplitup2 i
+    progErr s1 [| p1; p2 |] i otherMeasures2
+
+let avgErr2 = 
+    let sum = Seq.init 12 (fun i -> i) |> Seq.fold (fun (s:float) (i:int) -> s + fst (getIthErr2 i)) 0.0
+    let c = float 12
+    sum / c
 
 
 
