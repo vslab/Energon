@@ -308,19 +308,34 @@ let predictionError (splitup:float[]) (basis:int[]) (target:int) (resource:float
     let zipped = Array.zip splitup basis
     let predicted = Array.fold (fun (s:float) (split:float, i:int) -> s + resource.[i] * split) 0.0 zipped
 //    let error = predicted-measured
-    let error = System.Math.Abs(predicted-measured)
-    measured, predicted, error, error / measured
+    let error = predicted/measured
+    if error > 0 then
+        measured, predicted, error
+    else
+        printf "ERROR : %f %f " measured predicted
+        measured, predicted, 1.0
 
 let predictionErrors (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
     Array.map (predictionError splitup basis target) resources
 
+let calcGeometricMeanAndStdDev (a:float[]) =
+    Array.iter (printf "%f ") a
+    let prod = Array.fold (fun s v -> s*v) 1.0 a
+    let count = float (a.Length)
+    let mean = System.Math.Pow(prod, 1.0/count)
+    let sum = Array.map (fun v -> System.Math.Pow( System.Math.Log(v/mean), 2.0)) a |> Array.sum
+    //let sum = Array.map (fun v -> System.Math.Pow( System.Math.Log(v/1.0), 2.0)) a |> Array.sum
+    let squared = System.Math.Sqrt(sum/count)
+    let stddev = System.Math.Exp(squared)
+    printfn "DEBUG %f %f" mean stddev
+    mean, stddev
+    
+
 // given the splitup of a target program and an array of resources, returns the average prediction error and std dev
 let progErr (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
-    let errors = Array.map (fun (m:float,pred:float,err:float,perc:float) -> perc) (predictionErrors splitup basis target resources)
-    let average = errors.Average()
-    let sum = Array.fold (fun (s:float) (v:float) -> s + (v-average) * (v-average) ) 0.0 errors
-    let c = float (errors.Count()-1)
-    average, System.Math.Sqrt(sum / c ), errors
+    let errors = Array.map (fun (m:float,pred:float,err:float) -> err) (predictionErrors splitup basis target resources)
+    let mean, stddev = calcGeometricMeanAndStdDev errors
+    mean, stddev, errors
 
 
 // --------------------------------------------------
@@ -396,11 +411,7 @@ let printErrors (errors:(float*float*float[])[]) (n:int) =
             dict.[rounded] <- dict.[rounded] + 1
         else
             dict.Add(rounded, 1)
-    let sum = Array.fold (fun (s:float) v -> s+v) 0.0 allerrors
-    let count = float (allerrors.Length - n)
-    let avg = sum / count
-    let sum2 = Array.fold (fun (s:float) (av) -> s+(av-avg)*(av-avg)) 0.0 allerrors
-    let stddev = System.Math.Sqrt(sum2/(count-1.0))
+    let avg, stddev = calcGeometricMeanAndStdDev allerrors
     let sb = new System.Text.StringBuilder()
     sb.AppendLine("total error;")
     sb.AppendLine("avg err;std dev;")
@@ -426,65 +437,67 @@ let printErrors (errors:(float*float*float[])[]) (n:int) =
         printbucket i    
     let filename = String.Format(@"C:\data\errors_{0}.csv", n)
     System.IO.File.WriteAllText(filename, sb.ToString())
-    printf "%s" filename
+    printfn "saved to %s" filename
+    printfn "mean=%f, std dev=%f"  avg stddev
 
+// ---------- global variables -----------------
+
+let numberOfSystemsForModel = 3
+let numberOfSystemsForTest = misure_array.Length - numberOfSystemsForModel
+
+let r = new Random()
+let selectedIndices = Seq.toArray (seq {
+    for i in 1..numberOfSystemsForModel do
+        yield r.Next(0,misure_array.Length - 1) 
+    })
+let misure_with_indices = Array.init (misure_array.Length) (fun i -> i) |> Array.zip misure_array
+let misure_model = Array.filter (fun (v,i) -> selectedIndices.Contains(i)) misure_with_indices |> Array.map fst
+let misure_test = Array.filter (fun (v,i) -> not (selectedIndices.Contains(i))) misure_with_indices |> Array.map fst
 
 // ---------- testbed size = 1 ------------------
 
 // just pick a random program as the tested
 let rand = new System.Random()
 let chosenProg = rand.Next(0, 12)
-let chosenSystem = rand.Next(0, misure_array.Length)
-let chosenMeasures = misure_array.[chosenSystem]
+let chosenSystem = rand.Next(0, misure_model.Length)
+let chosenMeasures = misure_model.[chosenSystem]
 // the splitups are just the ratio..
 let energon = chosenMeasures.[chosenProg]
 let splitup1 = Array.map (fun v -> v/energon) chosenMeasures
-
-let measuresWithoutSelectedResources skip_index = 
-    let f,i = Array.fold (fun (ret:float[][], i) (x:float[]) -> if i = skip_index then ret, i+1 else Array.append ret [| x |], i+1 ) ([| |], 0) misure_array
-    f
-
-let otherMeasures = measuresWithoutSelectedResources chosenSystem
 
 // given the splitup of a target program and an array of resources, returns the average prediction error and std dev
 //let progErr (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
 let getIthErr1 i =
     let s1 = [| splitup1.[i] |]
-    progErr s1 [| chosenProg |] i otherMeasures
-
-getIthErr1 0
+    progErr s1 [| chosenProg |] i misure_test
 
 let avgErr1 = 
     let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
         if i <> chosenProg then Array.concat [| s; [| getIthErr1 i |] |] else s ) [| |] 
     printErrors allerrors 1
 
- 
 
+let p1 =  chosenProg
+let p2 = 4
 
 // ---------- testbed size 2, use max angle -------------
 
 // first 2 resources and programs
-let angle, r1, r2, p1, p2 = findMax2 misure_array
+//let angle, r1, r2, p1, p2 = findMax2 misure_model
+//
+//let url_r1 = findUrl r1
+//let url_r2 = findUrl r2
 
-let url_r1 = findUrl r1
-let url_r2 = findUrl r2
-
-let chosen_res_array = Array.rev (Array.sort [| r1; r2 |])
-let skipped1 = measuresWithoutSelectedResources chosen_res_array.[0]
-let otherMeasures2 = measuresWithoutSelectedResources chosen_res_array.[1]
-let res1 = misure_array.[r1]
-let res2 = misure_array.[r2]
 let progP1 = new Program()
-progP1.Measures <- [| res1.[p1]; res2.[p1] |]
+progP1.Measures <- Array.map (fun (v:float[]) -> v.[p1]) misure_model
 let progP2 = new Program()
-progP2.Measures <- [| res1.[p2]; res2.[p2] |]
+progP2.Measures <- Array.map (fun (v:float[]) -> v.[p2]) misure_model
 let s = new SplitupFinder()
 s.Testbed <- [| progP1; progP2 |]
 
 let findSplitup2 i =
     let p = new Program()
-    p.Measures <- [| res1.[i]; res2.[i] |] // risorse relative al programma
+    p.Measures <-Array.map (fun (v:float[]) -> v.[i]) misure_model // risorse relative al programma
     s.Target <- p
     if s.FindSplitup() then
         s.Splitup
@@ -493,7 +506,9 @@ let findSplitup2 i =
 
 let getIthErr2 i =
     let s1 = findSplitup2 i
-    progErr s1 [| p1; p2 |] i otherMeasures2
+    Array.iter (printf "%f ") s1
+    printfn ""
+    progErr s1 [| p1; p2 |] i misure_test
 
 let avgErr2 = 
     let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
@@ -504,36 +519,31 @@ let avgErr2 =
 
 // ---------- testbed size 3, use max angle -------------
 
-let angle, r3, p3 = findThird misure_array p1 p2
+//let angle, r3, p3 = findThird misure_model p1 p2
 
 // first 2 resources and programs
 
 p1
 p2
-let p3 = 2
+let p3 = 3
 
-let url_r3 = findUrl r3
-
-let chosen_res_array3 = Array.rev (Array.sort [| r1; r2; r3 |])
-let skipped1 = measuresWithoutSelectedResources chosen_res_array.[0]
-let otherMeasures2 = measuresWithoutSelectedResources chosen_res_array.[1]
-// TODO
-let otherMeasures3 = measuresWithoutSelectedResources chosen_res_array.[1]
-let res1 = misure_array.[r1]
-let res2 = misure_array.[r2]
-let res3 = misure_array.[r3]
+//let url_r3 = findUrl r3
+//
+//let res1 = misure_model.[r1]
+//let res2 = misure_model.[r2]
+//let res3 = misure_model.[r3]
 let progP1 = new Program()
-progP1.Measures <- [| res1.[p1]; res2.[p1]; res3.[p1] |]
+progP1.Measures <- Array.map (fun (v:float[]) -> v.[p1]) misure_model
 let progP2 = new Program()
-progP2.Measures <- [| res1.[p2]; res2.[p2]; res3.[p2] |]
+progP2.Measures <- Array.map (fun (v:float[]) -> v.[p2]) misure_model
 let progP3 = new Program()
-progP3.Measures <- [| res1.[p3]; res2.[p3]; res3.[p3] |]
+progP3.Measures <- Array.map (fun (v:float[]) -> v.[p3]) misure_model
 let s = new SplitupFinder()
 s.Testbed <- [| progP1; progP2; progP3 |]
 
 let findSplitup3 i =
     let p = new Program()
-    p.Measures <- [| res1.[i]; res2.[i]; res3.[i] |] // risorse relative al programma
+    p.Measures <-Array.map (fun (v:float[]) -> v.[i]) misure_model // risorse relative al programma
     s.Target <- p
     if s.FindSplitup() then
         s.Splitup
@@ -542,7 +552,7 @@ let findSplitup3 i =
 
 let getIthErr3 i =
     let s1 = findSplitup3 i
-    progErr s1 [| p1; p2; p3 |] i otherMeasures3
+    progErr s1 [| p1; p2; p3 |] i misure_test
 
 let avgErr3 = 
     let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
@@ -553,6 +563,41 @@ let avgErr3 =
 //    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
 //        Array.concat [| s; [| getIthErr3 i |] |] ) [| |] 
 //    printErrors allerrors 3
+
+
+
+
+
+// ---------- testbed size 4, use max angle -------------
+
+p1
+p2
+p3
+p4
+let p5 = 0
+
+let progP5 = new Program()
+progP5.Measures <- Array.map (fun (v:float[]) -> v.[p5]) misure_model
+let s = new SplitupFinder()
+s.Testbed <- [| progP1; progP2; progP3; progP4; progP5 |]
+
+let findSplitup5 i =
+    let p = new Program()
+    p.Measures <-Array.map (fun (v:float[]) -> v.[i]) misure_model // risorse relative al programma
+    s.Target <- p
+    if s.FindSplitup() then
+        s.Splitup
+    else
+        [|0.0; 0.0; 0.0; 0.0; 0.0 |]
+
+let getIthErr5 i =
+    let s1 = findSplitup5 i
+    progErr s1 [| p1; p2; p3; p4; p5 |] i misure_test
+
+let avgErr5 = 
+    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
+        if i <> p1 && i <> p2 && i <> p3 && i <> p4 && i <> p5 then Array.concat [| s; [| getIthErr5 i |] |] else s ) [| |] 
+    printErrors allerrors 5
 
 
 
