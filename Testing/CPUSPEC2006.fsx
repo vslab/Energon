@@ -202,6 +202,24 @@ let resourceSimilarity (a:float[]) (b:float[]) =
         bestj <- j
   (maxAngle, besti, bestj)
 
+// given 2 resources and 2 programs (the current basis), returns the program that maximizes the angle in the 3d space
+let resourceSimilarity3 (a:float[]) (b:float[]) (c:float[]) (i1:int) (i2:int) =
+  let zipped = Array.zip3 a b c
+  let mutable maxAngle = 0.0
+  let mutable besti = 0
+  for i in 0..(a.Length - 1) do
+      let a1, b1, c1 = zipped.[i]
+      let a2, b2, c2 = zipped.[i1]
+      let a3, b3, c3 = zipped.[i2]
+      let a = [| a1; a2; a3 |]
+      let b = [| b1; b2; b3 |]
+      let c = [| c1; c2; c3 |]
+      let alpha = angleBetweenVectors (a) (b) + angleBetweenVectors (a) (c) + angleBetweenVectors (b) (c)
+      if alpha > maxAngle then
+        maxAngle <- alpha
+        besti <- i
+  (maxAngle, besti)
+
 // given the measures of N programs, it tells you which resources (first 2 indices) and which programs (last 2 indices) 
 // should be used to build the splitup
 let findMax2 (programs:float[][]) = 
@@ -222,23 +240,36 @@ let findMax2 (programs:float[][]) =
         bestprogj <- thisj
   (maxAngle, besti, bestj, bestprogi, bestprogj)
 
-let resourceSimilarityFixedBase (a:float[]) (b:float[])  =
-  let zipped = Array.zip a b
+//let resourceSimilarityFixedBase (a:float[]) (b:float[])  =
+//  let zipped = Array.zip a b
+//  let mutable maxAngle = 0.0
+//  let mutable besti = 0
+//  let mutable bestj = 0
+//  for i in 0..(zipped.Length - 1) do
+//    for j in i..(zipped.Length - 1) do
+//      let a1, a2 = zipped.[i]
+//      let b1, b2 = zipped.[j]
+//      let a = [| a1; a2|]
+//      let b = [| b1; b2|]
+//      let alpha = angleBetweenVectors (a) (b)
+//      if alpha > maxAngle then
+//        maxAngle <- alpha
+//        besti <- i
+//        bestj <- j
+//  (maxAngle, besti, bestj)
+
+let findThird (programs:float[][]) (b1:int) (b2:int)= 
   let mutable maxAngle = 0.0
   let mutable besti = 0
-  let mutable bestj = 0
-  for i in 0..(zipped.Length - 1) do
-    for j in i..(zipped.Length - 1) do
-      let a1, a2 = zipped.[i]
-      let b1, b2 = zipped.[j]
-      let a = [| a1; a2|]
-      let b = [| b1; b2|]
-      let alpha = angleBetweenVectors (a) (b)
-      if alpha > maxAngle then
-        maxAngle <- alpha
+  let mutable bestprogi = 0
+  let l = programs.GetLength(0)
+  for i in 0..(l - 1) do
+    let ang, thisi = resourceSimilarity3 (programs.[b1]) (programs.[b2]) (programs.[i]) b1 b2
+    if ang > maxAngle then
+        maxAngle <- ang
         besti <- i
-        bestj <- j
-  (maxAngle, besti, bestj)
+        bestprogi <- thisi
+  (maxAngle, besti, bestprogi)
 
 
 // ------------- TODO ----------------
@@ -276,6 +307,7 @@ let predictionError (splitup:float[]) (basis:int[]) (target:int) (resource:float
     let measured = resource.[target]
     let zipped = Array.zip splitup basis
     let predicted = Array.fold (fun (s:float) (split:float, i:int) -> s + resource.[i] * split) 0.0 zipped
+//    let error = predicted-measured
     let error = System.Math.Abs(predicted-measured)
     measured, predicted, error, error / measured
 
@@ -287,8 +319,8 @@ let progErr (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) =
     let errors = Array.map (fun (m:float,pred:float,err:float,perc:float) -> perc) (predictionErrors splitup basis target resources)
     let average = errors.Average()
     let sum = Array.fold (fun (s:float) (v:float) -> s + (v-average) * (v-average) ) 0.0 errors
-    let c = float (errors.Count())
-    average, System.Math.Sqrt(sum / c )
+    let c = float (errors.Count()-1)
+    average, System.Math.Sqrt(sum / c ), errors
 
 
 // --------------------------------------------------
@@ -351,6 +383,52 @@ let getSplitup measures  (s:SplitupFinder) =
     else
         [|  |]
 
+
+// ---------- print results ---------------
+open System.Text
+
+let printErrors (errors:(float*float*float[])[]) (n:int) =
+    let allerrors = errors |> Array.map (fun (_,_,v) -> v) |> Array.fold (fun (s:float[]) (v:float[]) -> s.Concat(v) |> Seq.toArray) [| |]  |>  Array.sort
+    let dict = new Dictionary<int,int>()
+    let addOrIncrement (v:float) =
+        let rounded = int (v*100.0)
+        if dict.ContainsKey rounded then
+            dict.[rounded] <- dict.[rounded] + 1
+        else
+            dict.Add(rounded, 1)
+    let sum = Array.fold (fun (s:float) v -> s+v) 0.0 allerrors
+    let count = float (allerrors.Length - n)
+    let avg = sum / count
+    let sum2 = Array.fold (fun (s:float) (av) -> s+(av-avg)*(av-avg)) 0.0 allerrors
+    let stddev = System.Math.Sqrt(sum2/(count-1.0))
+    let sb = new System.Text.StringBuilder()
+    sb.AppendLine("total error;")
+    sb.AppendLine("avg err;std dev;")
+    sb.AppendFormat("{0};{1};", avg, stddev)
+    sb.AppendLine()
+    sb.AppendLine("programs error;")
+    sb.AppendLine("program;avg err;std dev;")
+    for i in 0..(errors.Length-1) do
+        let a,b,_ = errors.[i]
+        sb.AppendFormat("{0};{1};{2}", i, a, b)
+        sb.AppendLine()
+    sb.AppendLine()
+    sb.AppendLine("buckets;")
+    sb.AppendLine("bucket;number;")
+    // merge all errors
+    Array.iter addOrIncrement allerrors
+    let printbucket bucket =
+        let count = if dict.ContainsKey bucket then dict.[bucket] else 0
+        sb.AppendFormat("{0};{1};", bucket, count)
+        sb.AppendLine() |> ignore
+    let buckets = dict.Keys |> Seq.toArray |> Array.sort
+    for i in (buckets.First())..(buckets.Last()) do
+        printbucket i    
+    let filename = String.Format(@"C:\data\errors_{0}.csv", n)
+    System.IO.File.WriteAllText(filename, sb.ToString())
+    printf "%s" filename
+
+
 // ---------- testbed size = 1 ------------------
 
 // just pick a random program as the tested
@@ -377,27 +455,11 @@ let getIthErr1 i =
 getIthErr1 0
 
 let avgErr1 = 
-    let sum = Seq.init 12 (fun i -> i) |> Seq.fold (fun (s:float) (i:int) -> 
-        if i <> chosenProg then s + fst (getIthErr1 i) else s ) 0.0
-    let c = float 11
-    sum / c
+    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
+        if i <> chosenProg then Array.concat [| s; [| getIthErr1 i |] |] else s ) [| |] 
+    printErrors allerrors 1
 
-
-
-
-
-//
-//
-
-//
-////getEstimationErrorOnSystem (measured:float) (splitup:float[]) (testbed:float[]) =
-//// getEstimationError (measured:float[]) (splitup:float[]) (testbed:float[][])
-//let getErrors = seq {
-//    let only i = Array.map (fun (x:float[]) -> x.[i]) misure_array
-//    for i in 0..11 do
-//        yield getEstimationError (only i) splitup1 [| (only chosenProg) |]
-//    }
-//let errorsArray = Seq.toArray getErrors       
+ 
 
 
 // ---------- testbed size 2, use max angle -------------
@@ -434,54 +496,63 @@ let getIthErr2 i =
     progErr s1 [| p1; p2 |] i otherMeasures2
 
 let avgErr2 = 
-    let sum = Seq.init 12 (fun i -> i) |> Seq.fold (fun (s:float) (i:int) -> 
-        if i <> p1 && i <> p2 then 
-            s + fst (getIthErr2 i)
-        else s) 0.0
-    let c = float 10
-    sum / c
+    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
+        if i <> p1 && i <> p2 then Array.concat [| s; [| getIthErr2 i |] |] else s ) [| |] 
+    printErrors allerrors 2
 
 
 
-
-    // TODO
 // ---------- testbed size 3, use max angle -------------
 
+let angle, r3, p3 = findThird misure_array p1 p2
+
 // first 2 resources and programs
-let angle, r1, r2, p1, p2 = findMax2 misure_array
 
-let url_r1 = findUrl r1
-let url_r2 = findUrl r2
+p1
+p2
+let p3 = 2
 
-let chosen_res_array = Array.rev (Array.sort [| r1; r2 |])
+let url_r3 = findUrl r3
+
+let chosen_res_array3 = Array.rev (Array.sort [| r1; r2; r3 |])
 let skipped1 = measuresWithoutSelectedResources chosen_res_array.[0]
 let otherMeasures2 = measuresWithoutSelectedResources chosen_res_array.[1]
+// TODO
+let otherMeasures3 = measuresWithoutSelectedResources chosen_res_array.[1]
 let res1 = misure_array.[r1]
 let res2 = misure_array.[r2]
+let res3 = misure_array.[r3]
 let progP1 = new Program()
-progP1.Measures <- [| res1.[p1]; res2.[p1] |]
+progP1.Measures <- [| res1.[p1]; res2.[p1]; res3.[p1] |]
 let progP2 = new Program()
-progP2.Measures <- [| res1.[p2]; res2.[p2] |]
+progP2.Measures <- [| res1.[p2]; res2.[p2]; res3.[p2] |]
+let progP3 = new Program()
+progP3.Measures <- [| res1.[p3]; res2.[p3]; res3.[p3] |]
 let s = new SplitupFinder()
-s.Testbed <- [| progP1; progP2 |]
+s.Testbed <- [| progP1; progP2; progP3 |]
 
-let findSplitup2 i =
+let findSplitup3 i =
     let p = new Program()
-    p.Measures <- [| res1.[i]; res2.[i] |] // risorse relative al programma
+    p.Measures <- [| res1.[i]; res2.[i]; res3.[i] |] // risorse relative al programma
     s.Target <- p
     if s.FindSplitup() then
         s.Splitup
     else
-        [|0.0; 0.0 |]
+        [|0.0; 0.0; 0.0 |]
 
-let getIthErr2 i =
-    let s1 = findSplitup2 i
-    progErr s1 [| p1; p2 |] i otherMeasures2
+let getIthErr3 i =
+    let s1 = findSplitup3 i
+    progErr s1 [| p1; p2; p3 |] i otherMeasures3
 
-let avgErr2 = 
-    let sum = Seq.init 12 (fun i -> i) |> Seq.fold (fun (s:float) (i:int) -> s + fst (getIthErr2 i)) 0.0
-    let c = float 12
-    sum / c
+let avgErr3 = 
+    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
+        if i <> p1 && i <> p2 && i <> p3 then Array.concat [| s; [| getIthErr3 i |] |] else s ) [| |] 
+    printErrors allerrors 3
+
+//let avgErr3 = 
+//    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
+//        Array.concat [| s; [| getIthErr3 i |] |] ) [| |] 
+//    printErrors allerrors 3
 
 
 
