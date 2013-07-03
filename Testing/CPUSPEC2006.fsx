@@ -526,12 +526,18 @@ let avgErr (split:SplitupFinder) (basis:int[]) =
         if (not (basis.Contains i)) then Array.concat [| s; [| getIthErr i split basis |] |] else s ) [| |] 
     let avg,std = printErrors allerrors basis.Length
     let cand = findCandidate allerrors
-    let add = Array.fold (fun (s:int) (i:int) -> if i <= cand then s+1 else s) 0 basis
-    avg, std, cand + add
+    let added = Array.fold (fun (s:int) (i:int) -> if i <= s then s+1 else s) cand (Array.sort basis)
+    Console.WriteLine() 
+    Console.WriteLine("basis is ")
+    Array.iter (fun (i:int) -> Console.Write("{0} ", i) ) basis
+    Console.WriteLine() 
+    Console.WriteLine("cand={0} add={1}", cand, added)
+    Console.WriteLine() 
+    avg, std, added
 
-//let basis = [| 0; 1 |]
-//let cand = 0
-//let add = Array.fold (fun (s:int) (i:int) -> if i <= cand then s+1 else s) 0 basis
+let basis = [| 5; |]
+let cand = 4
+let add = Array.fold (fun (s:int) (i:int) -> if i <= s then s+1 else s) cand (Array.sort basis)
 
 let rand = new System.Random()
 
