@@ -33,7 +33,7 @@ let dbname = "Measures"
 
 // ------------------------ SAVE TO DB ----------------------
 
-let system = "ImportedFromSpecWebsite"
+let system = "ImportedFromSpecWebsite_CINT2006"
 
 // db helper
 //let server = "HPLAB\SQLEXPRESS"
@@ -62,6 +62,8 @@ Console.WriteLine("this tool will import every CPU SPEC result from the CPU SPEC
     
 let fetchFile (rel_addr:string) =
     let addr = "http://www.spec.org/cpu2006/results/" + rel_addr
+    printfn "fetching %s" addr
+    System.Threading.Thread.Sleep(1000)
     let wc = System.Net.WebClient()
     let content = wc.DownloadString(addr)
     let righe = content.Split([| '\n' |])
@@ -83,8 +85,7 @@ let fetchFile (rel_addr:string) =
             (false,starr)
     let setup  = 
         let from = content.IndexOf("HARDWARE")
-        let upto = content.IndexOf("Operating System Notes")
-        content.Substring(from, upto-from)
+        content.Substring(from)
     let filtroSpecInt = filtro "SPECint(R)_base2006"
     let filtroSpecFPU = filtro "SPECfpu(R)_base2006"
     let filtro =
@@ -139,11 +140,15 @@ System.Console.WriteLine("index contains " + urls.Length.ToString() + " elements
 //let urls2 = Seq.skip 2352 urls
 //let runs = Seq.map fetchFile urls2
 //urls.Length
+//let m,s,a =fetchFile (urls.[0])
+ 
 
 let runs = Seq.map fetchFile urls
 let run_clean = Seq.filter (fun (l:(string*string) list,d:string,e:string) -> l.Length > 0) runs
 //let runs_array = Seq.toArray run_clean
 
+runs.Count()
+run_clean.Count()
 
 let save prog time system note  =
   saveCpuSpecRun system note prog time
@@ -151,7 +156,7 @@ let save prog time system note  =
 let savePrograms ((l:(string*string) list),systemDiscard,note) =
   Seq.iter (fun (prog,time) -> save prog time system note ) l
   System.Console.WriteLine(note + " saved ")
-  System.Threading.Thread.Sleep(2000)
+  
       
 Seq.iter savePrograms run_clean
 
@@ -307,35 +312,45 @@ let predictionError (splitup:float[]) (basis:int[]) (target:int) (resource:float
     let measured = resource.[target]
     let zipped = Array.zip splitup basis
     let predicted = Array.fold (fun (s:float) (split:float, i:int) -> s + resource.[i] * split) 0.0 zipped
-//    let error = predicted-measured
-    let error = predicted/measured
-    if error > 0 then
-        measured, predicted, error
-    else
-        printf "ERROR : %f %f " measured predicted
-        measured, predicted, 1.0
+    let error = (predicted-measured)/measured
+    //let error = predicted/measured
+    measured, predicted, error
+//    if error > 0.0 then
+//        measured, predicted, error
+//    else
+//        printf "ERROR : %f %f " measured predicted
+//        measured, predicted, 1.0
 
 let predictionErrors (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
     Array.map (predictionError splitup basis target) resources
 
+//let calcGeometricMeanAndStdDev (a:float[]) =
+//    //Array.iter (printf "%f ") a
+//    let prod = Array.fold (fun s v -> s*v) 1.0 a
+//    let count = float (a.Length)
+//    let mean = System.Math.Pow(prod, 1.0/count)
+//    let sum = Array.map (fun v -> System.Math.Pow( System.Math.Log(v/mean), 2.0)) a |> Array.sum
+//    //let sum = Array.map (fun v -> System.Math.Pow( System.Math.Log(v/1.0), 2.0)) a |> Array.sum
+//    let squared = System.Math.Sqrt(sum/count)
+//    let stddev = System.Math.Exp(squared)
+//    //printfn "DEBUG %f %f" mean stddev
+//    mean, stddev
+
 let calcGeometricMeanAndStdDev (a:float[]) =
-    Array.iter (printf "%f ") a
-    let prod = Array.fold (fun s v -> s*v) 1.0 a
+    //Array.iter (printf "%f ") a
+    let sum = Array.fold (fun s v -> s + v) 0.0 a
     let count = float (a.Length)
-    let mean = System.Math.Pow(prod, 1.0/count)
-    let sum = Array.map (fun v -> System.Math.Pow( System.Math.Log(v/mean), 2.0)) a |> Array.sum
-    //let sum = Array.map (fun v -> System.Math.Pow( System.Math.Log(v/1.0), 2.0)) a |> Array.sum
-    let squared = System.Math.Sqrt(sum/count)
-    let stddev = System.Math.Exp(squared)
-    printfn "DEBUG %f %f" mean stddev
-    mean, stddev
+    let mean = sum / count
+    let sum2 = Array.fold (fun s v -> s + (v-mean)*(v-mean)) 0.0 a
+    let count2 = float (a.Length - 1)
+    mean, System.Math.Sqrt(sum2 / count2)
     
 
 // given the splitup of a target program and an array of resources, returns the average prediction error and std dev
 let progErr (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
     let errors = Array.map (fun (m:float,pred:float,err:float) -> err) (predictionErrors splitup basis target resources)
     let mean, stddev = calcGeometricMeanAndStdDev errors
-    mean, stddev, errors
+    mean, stddev, errors, splitup
 
 
 // --------------------------------------------------
@@ -355,14 +370,14 @@ let db =
     context.Connection.Open()
     context
 
-let limite = 130
-let misure_all = db.Measures.Where(fun (m:Measures) -> m.ExperimentID >= 319 && m.ExperimentID < (319 + limite*12)).OrderBy(fun m -> m.ExperimentID) |> Seq.toList 
-let misure_f = misure_all|> Seq.map (fun (m:Measures) -> (m.ExperimentID - 319)/12, m.AverageValue.Value)  |> Seq.groupBy fst |> Seq.map (fun (_,x) -> Seq.map snd x |> Seq.toArray)
+let limite = 2301
+let firstExpID = 1879
+let misure_all = db.Measures.Where(fun (m:Measures) -> m.ExperimentID >= firstExpID && m.ExperimentID < (firstExpID + limite*12)).OrderBy(fun m -> m.ExperimentID) |> Seq.toList 
+let misure_f = misure_all|> Seq.map (fun (m:Measures) -> (m.ExperimentID - firstExpID)/12, m.AverageValue.Value)  |> Seq.groupBy fst |> Seq.map (fun (_,x) -> Seq.map snd x |> Seq.toArray)
 let misure_array = Seq.toArray misure_f
 
 let findUrl i = 
-    db.Experiments.Where(fun (e:Experiments) -> e.Id = 319 + i*12).First().Note
-
+    db.Experiments.Where(fun (e:Experiments) -> e.Id = firstExpID + i*12).First().Note
 
 
 #r "GlpkProxy.dll"
@@ -402,8 +417,8 @@ let getSplitup measures  (s:SplitupFinder) =
 // ---------- print results ---------------
 open System.Text
 
-let printErrors (errors:(float*float*float[])[]) (n:int) =
-    let allerrors = errors |> Array.map (fun (_,_,v) -> v) |> Array.fold (fun (s:float[]) (v:float[]) -> s.Concat(v) |> Seq.toArray) [| |]  |>  Array.sort
+let printErrors (errors:(float*float*float[]*float[])[]) (n:int) =
+    let allerrors = errors |> Array.map (fun (_,_,v,_) -> v) |> Array.fold (fun (s:float[]) (v:float[]) -> s.Concat(v) |> Seq.toArray) [| |]  |>  Array.sort
     let dict = new Dictionary<int,int>()
     let addOrIncrement (v:float) =
         let rounded = int (v*100.0)
@@ -420,8 +435,17 @@ let printErrors (errors:(float*float*float[])[]) (n:int) =
     sb.AppendLine("programs error;")
     sb.AppendLine("program;avg err;std dev;")
     for i in 0..(errors.Length-1) do
-        let a,b,_ = errors.[i]
+        let a,b,_,_ = errors.[i]
         sb.AppendFormat("{0};{1};{2}", i, a, b)
+        sb.AppendLine()
+        printfn "prog %i %f %f" i a b
+    sb.AppendLine()
+    sb.AppendLine("programs splitup;")
+    sb.AppendLine("program;splitup;")
+    for i in 0..(errors.Length-1) do
+        let _,_,_,s = errors.[i]
+        sb.AppendFormat("{0};", i)
+        Array.iter (fun (si:float) -> sb.AppendFormat("{0};", si) |> ignore) s
         sb.AppendLine()
     sb.AppendLine()
     sb.AppendLine("buckets;")
@@ -439,10 +463,20 @@ let printErrors (errors:(float*float*float[])[]) (n:int) =
     System.IO.File.WriteAllText(filename, sb.ToString())
     printfn "saved to %s" filename
     printfn "mean=%f, std dev=%f"  avg stddev
+    avg, stddev
 
-// ---------- global variables -----------------
+let findCandidate (errors:(float*float*float[]*float[])[])  =
+    let indexed = seq {
+        for i in 0..(errors.Length-1) do
+            let a,b,_,_ = errors.[i]
+            let range = System.Math.Max(System.Math.Abs(a-b),System.Math.Abs(a+b))
+            yield i,range }
+    let cand,v = Seq.maxBy (fun (i,v) -> v) indexed
+    cand
 
-let numberOfSystemsForModel = 3
+// ---------- global variables about the experiment -----------------
+
+let numberOfSystemsForModel = 100
 let numberOfSystemsForTest = misure_array.Length - numberOfSystemsForModel
 
 let r = new Random()
@@ -451,153 +485,85 @@ let selectedIndices = Seq.toArray (seq {
         yield r.Next(0,misure_array.Length - 1) 
     })
 let misure_with_indices = Array.init (misure_array.Length) (fun i -> i) |> Array.zip misure_array
+// this is the set of measures we'll use to build the model
 let misure_model = Array.filter (fun (v,i) -> selectedIndices.Contains(i)) misure_with_indices |> Array.map fst
+// this is the set of measures we'll use to test
 let misure_test = Array.filter (fun (v,i) -> not (selectedIndices.Contains(i))) misure_with_indices |> Array.map fst
 
 // ---------- testbed size = 1 ------------------
 
 // just pick a random program as the tested
-let rand = new System.Random()
-let chosenProg = rand.Next(0, 12)
-let chosenSystem = rand.Next(0, misure_model.Length)
-let chosenMeasures = misure_model.[chosenSystem]
-// the splitups are just the ratio..
-let energon = chosenMeasures.[chosenProg]
-let splitup1 = Array.map (fun v -> v/energon) chosenMeasures
+
+let testBedFromBasis (basis:int[])= 
+    Array.map (fun i -> 
+            let prog = new Program()
+            prog.Measures <- Array.map (fun (v:float[]) -> v.[i]) misure_model
+            prog
+        ) basis
+
+let findSplitup i (s:SplitupFinder) =
+    let p = new Program()
+    p.Measures <- Array.map (fun (v:float[]) -> v.[i]) misure_model // risorse relative al programma
+    s.Target <- p
+    if s.FindSplitup() then
+        s.Splitup
+    else
+        raise (System.Exception("Couldn't find a splitup"))
+
 
 // given the splitup of a target program and an array of resources, returns the average prediction error and std dev
 //let progErr (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
-let getIthErr1 i =
-    let s1 = [| splitup1.[i] |]
-    progErr s1 [| chosenProg |] i misure_test
-
-let avgErr1 = 
-    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
-        if i <> chosenProg then Array.concat [| s; [| getIthErr1 i |] |] else s ) [| |] 
-    printErrors allerrors 1
-
-
-let p1 =  chosenProg
-let p2 = 4
-
-// ---------- testbed size 2, use max angle -------------
-
-// first 2 resources and programs
-//let angle, r1, r2, p1, p2 = findMax2 misure_model
-//
-//let url_r1 = findUrl r1
-//let url_r2 = findUrl r2
-
-let progP1 = new Program()
-progP1.Measures <- Array.map (fun (v:float[]) -> v.[p1]) misure_model
-let progP2 = new Program()
-progP2.Measures <- Array.map (fun (v:float[]) -> v.[p2]) misure_model
-let s = new SplitupFinder()
-s.Testbed <- [| progP1; progP2 |]
-
-let findSplitup2 i =
-    let p = new Program()
-    p.Measures <-Array.map (fun (v:float[]) -> v.[i]) misure_model // risorse relative al programma
-    s.Target <- p
-    if s.FindSplitup() then
-        s.Splitup
-    else
-        [|0.0; 0.0 |]
-
-let getIthErr2 i =
-    let s1 = findSplitup2 i
+let getIthErr i (s:SplitupFinder) basis =
+    let s1 = findSplitup i s
+    printf "splitup for the %i th program is "
     Array.iter (printf "%f ") s1
     printfn ""
-    progErr s1 [| p1; p2 |] i misure_test
+    progErr s1 basis i misure_test
 
-let avgErr2 = 
-    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
-        if i <> p1 && i <> p2 then Array.concat [| s; [| getIthErr2 i |] |] else s ) [| |] 
-    printErrors allerrors 2
+// prints the errors in a csv file and proposes the index of the program we should include in the basis next
+let avgErr (split:SplitupFinder) (basis:int[]) = 
+    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[]*float[])[]) (i:int) -> 
+        if (not (basis.Contains i)) then Array.concat [| s; [| getIthErr i split basis |] |] else s ) [| |] 
+    let avg,std = printErrors allerrors basis.Length
+    let cand = findCandidate allerrors
+    let add = Array.fold (fun (s:int) (i:int) -> if i <= cand then s+1 else s) 0 basis
+    avg, std, cand + add
 
+//let basis = [| 0; 1 |]
+//let cand = 0
+//let add = Array.fold (fun (s:int) (i:int) -> if i <= cand then s+1 else s) 0 basis
 
+let rand = new System.Random()
 
-// ---------- testbed size 3, use max angle -------------
+let exec p basis =
+    let extendedBasis = Array.append basis [| p |]
+    let s = new SplitupFinder()
+    s.Testbed <- testBedFromBasis extendedBasis
+    let avg, std, next = avgErr s extendedBasis
+    avg, std, next, extendedBasis
 
-//let angle, r3, p3 = findThird misure_model p1 p2
+let execCycle =
+    let p1 = rand.Next(0, 12)
+    let chosenSystem = rand.Next(0, misure_model.Length)
+    let chosenMeasures = misure_model.[chosenSystem]
+    let rec pump (avgs:float[]) (stddevs:float[]) (next:int) (basis:int[]) (nextHist:int[]) (n:int) =
+        match n with
+        | 0 -> avgs, stddevs, nextHist
+        | _ -> let avg, std, next, extBasis = exec next basis
+               let newAvgs = Array.append avgs [| avg |]
+               let newStddevs = Array.append stddevs [| std |]
+               let newHist = Array.append nextHist [| next |]
+               pump newAvgs newStddevs next extBasis newHist (n-1)
+    let res = pump (Array.empty<float>) (Array.empty<float>) p1 (Array.empty<int>) (Array.empty<int>) 8
+    let sb = System.Text.StringBuilder()
+    sb.AppendLine("average;standard deviation;introduced program")
+    let a,b,c = res
+    let zipped = Array.zip3 a b c
+    Array.iter (fun (a:float,b:float,c:int) -> sb.AppendFormat("{0};{1};{2};", a, b, c) |> ignore; sb.AppendLine() |> ignore ) zipped
+    let filename = @"C:\data\cycle.csv"
+    System.IO.File.WriteAllText(filename, sb.ToString())
+    printfn "cycle saved to %s" filename
 
-// first 2 resources and programs
-
-p1
-p2
-let p3 = 3
-
-//let url_r3 = findUrl r3
-//
-//let res1 = misure_model.[r1]
-//let res2 = misure_model.[r2]
-//let res3 = misure_model.[r3]
-let progP1 = new Program()
-progP1.Measures <- Array.map (fun (v:float[]) -> v.[p1]) misure_model
-let progP2 = new Program()
-progP2.Measures <- Array.map (fun (v:float[]) -> v.[p2]) misure_model
-let progP3 = new Program()
-progP3.Measures <- Array.map (fun (v:float[]) -> v.[p3]) misure_model
-let s = new SplitupFinder()
-s.Testbed <- [| progP1; progP2; progP3 |]
-
-let findSplitup3 i =
-    let p = new Program()
-    p.Measures <-Array.map (fun (v:float[]) -> v.[i]) misure_model // risorse relative al programma
-    s.Target <- p
-    if s.FindSplitup() then
-        s.Splitup
-    else
-        [|0.0; 0.0; 0.0 |]
-
-let getIthErr3 i =
-    let s1 = findSplitup3 i
-    progErr s1 [| p1; p2; p3 |] i misure_test
-
-let avgErr3 = 
-    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
-        if i <> p1 && i <> p2 && i <> p3 then Array.concat [| s; [| getIthErr3 i |] |] else s ) [| |] 
-    printErrors allerrors 3
-
-//let avgErr3 = 
-//    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
-//        Array.concat [| s; [| getIthErr3 i |] |] ) [| |] 
-//    printErrors allerrors 3
-
-
-
-
-
-// ---------- testbed size 4, use max angle -------------
-
-p1
-p2
-p3
-p4
-let p5 = 0
-
-let progP5 = new Program()
-progP5.Measures <- Array.map (fun (v:float[]) -> v.[p5]) misure_model
-let s = new SplitupFinder()
-s.Testbed <- [| progP1; progP2; progP3; progP4; progP5 |]
-
-let findSplitup5 i =
-    let p = new Program()
-    p.Measures <-Array.map (fun (v:float[]) -> v.[i]) misure_model // risorse relative al programma
-    s.Target <- p
-    if s.FindSplitup() then
-        s.Splitup
-    else
-        [|0.0; 0.0; 0.0; 0.0; 0.0 |]
-
-let getIthErr5 i =
-    let s1 = findSplitup5 i
-    progErr s1 [| p1; p2; p3; p4; p5 |] i misure_test
-
-let avgErr5 = 
-    let allerrors =  Array.init 12 (fun i -> i) |> Seq.fold (fun (s:(float*float*float[])[]) (i:int) -> 
-        if i <> p1 && i <> p2 && i <> p3 && i <> p4 && i <> p5 then Array.concat [| s; [| getIthErr5 i |] |] else s ) [| |] 
-    printErrors allerrors 5
 
 
 
