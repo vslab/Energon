@@ -279,24 +279,24 @@ let findThird (programs:float[][]) (b1:int) (b2:int)=
 
 // ------------- TODO ----------------
 // given a set of measurements programs 
-let findMaxN (programs:float[][]) (basis_indices:int[]) = 
-  let mutable maxAngle = 0.0
-  let mutable besti = 0
-  let mutable bestj = 0
-  let mutable bestprogi = 0
-  let mutable bestprogj = 0
-  let rl = programs.GetLength(0)
-  let bl = basis.GetLength(0)
-  for i in 0..(rl - 1) do
-    for j in 0..(bl - 1) do
-      let ang, thisi, thisj = resourceSimilarity (programs.[i]) (basis.[j])
-      if ang > maxAngle then
-        maxAngle <- ang
-        besti <- i
-        bestj <- j
-        bestprogi <- thisi
-        bestprogj <- thisj
-  (maxAngle, besti, bestj, bestprogi, bestprogj)
+//let findMaxN (programs:float[][]) (basis_indices:int[]) = 
+//  let mutable maxAngle = 0.0
+//  let mutable besti = 0
+//  let mutable bestj = 0
+//  let mutable bestprogi = 0
+//  let mutable bestprogj = 0
+//  let rl = programs.GetLength(0)
+//  let bl = basis.GetLength(0)
+//  for i in 0..(rl - 1) do
+//    for j in 0..(bl - 1) do
+//      let ang, thisi, thisj = resourceSimilarity (programs.[i]) (basis.[j])
+//      if ang > maxAngle then
+//        maxAngle <- ang
+//        besti <- i
+//        bestj <- j
+//        bestprogi <- thisi
+//        bestprogj <- thisj
+//  (maxAngle, besti, bestj, bestprogi, bestprogj)
 
 
 
@@ -466,6 +466,19 @@ let printErrors (errors:(float*float*float[]*float[])[]) (n:int) =
     printfn "mean=%f, std dev=%f"  avg stddev
     avg, stddev
 
+
+let justErrors (errors:(float*float*float[]*float[])[]) (n:int) =
+    let allerrors = errors |> Array.map (fun (_,_,v,_) -> v) |> Array.fold (fun (s:float[]) (v:float[]) -> s.Concat(v) |> Seq.toArray) [| |]  |>  Array.sort
+    let dict = new Dictionary<int,int>()
+    let addOrIncrement (v:float) =
+        let rounded = int (v*100.0)
+        if dict.ContainsKey rounded then
+            dict.[rounded] <- dict.[rounded] + 1
+        else
+            dict.Add(rounded, 1)
+    let avg, stddev = calcGeometricMeanAndStdDev allerrors
+    avg, stddev
+
 let findCandidate (errors:(float*float*float[]*float[])[])  =
     let indexed = seq {
         for i in 0..(errors.Length-1) do
@@ -478,6 +491,7 @@ let findCandidate (errors:(float*float*float[]*float[])[])  =
 // ---------- global variables about the experiment -----------------
 let r = new Random()
 
+let suitesize = 8
 
 let execCycle numberOfSystemsForModel =
     let numberOfSystemsForTest = misure_array.Length - numberOfSystemsForModel
@@ -536,7 +550,7 @@ let execCycle numberOfSystemsForModel =
         let avg, std, next = avgErr s extendedBasis
         avg, std, next, extendedBasis
 
-    let p1 = rand.Next(0, 12)
+    let p1 = r.Next(0, 12)
     let rec pump (avgs:float[]) (stddevs:float[]) (next:int) (basis:int[]) (nextHist:int[]) (n:int) =
         match n with
         | 0 -> avgs, stddevs, nextHist
@@ -556,7 +570,94 @@ let execCycle numberOfSystemsForModel =
     printfn "cycle saved to %s" filename
 
 
-execCycle 10
+let findBestModelSize max incr =
+    let runCycle numberOfSystemsForModel =
+        let numberOfSystemsForTest = misure_array.Length - numberOfSystemsForModel
+        let selectedIndices = Seq.toArray (seq {
+            for i in 1..numberOfSystemsForModel do
+                yield r.Next(0,misure_array.Length - 1) 
+            })
+        let misure_with_indices = Array.init (misure_array.Length) (fun i -> i) |> Array.zip misure_array
+        // this is the set of measures we'll use to build the model
+        let misure_model = Array.filter (fun (v,i) -> selectedIndices.Contains(i)) misure_with_indices |> Array.map fst
+        // this is the set of measures we'll use to test
+        let misure_test = Array.filter (fun (v,i) -> not (selectedIndices.Contains(i))) misure_with_indices |> Array.map fst
+        let testBedFromBasis (basis:int[])= 
+            Array.map (fun i -> 
+                    let prog = new Program()
+                    prog.Measures <- Array.map (fun (v:float[]) -> v.[i]) misure_model
+                    prog
+                ) basis
+        let findSplitup i (s:SplitupFinder) =
+            let p = new Program()
+            p.Measures <- Array.map (fun (v:float[]) -> v.[i]) misure_model // risorse relative al programma
+            s.Target <- p
+            if s.FindSplitup() then
+                s.Splitup
+            else
+                raise (System.Exception("Couldn't find a splitup"))
+
+        // given the splitup of a target program and an array of resources, returns the average prediction error and std dev
+        //let progErr (splitup:float[]) (basis:int[]) (target:int) (resources:float[][]) = 
+        let getIthErr i (s:SplitupFinder) basis =
+            let s1 = findSplitup i s
+            printf "splitup for the %i th program is "
+            Array.iter (printf "%f ") s1
+            printfn ""
+            progErr s1 basis i misure_test
+
+        // prints the errors in a csv file and proposes the index of the program we should include in the basis next
+        let avgErr (split:SplitupFinder) (basis:int[]) = 
+            let allerrors =  Array.init suitesize (fun i -> i) |> Seq.fold (fun (s:(float*float*float[]*float[])[]) (i:int) -> 
+                if (not (basis.Contains i)) then Array.concat [| s; [| getIthErr i split basis |] |] else s ) [| |] 
+            let avg,std = justErrors allerrors basis.Length
+            let cand = findCandidate allerrors
+            let added = Array.fold (fun (s:int) (i:int) -> if i <= s then s+1 else s) cand (Array.sort basis)
+            Console.WriteLine() 
+            Console.WriteLine("basis is ")
+            Array.iter (fun (i:int) -> Console.Write("{0} ", i) ) basis
+            Console.WriteLine() 
+            Console.WriteLine("cand={0} add={1}", cand, added)
+            Console.WriteLine() 
+            avg, std, added
+
+        let exec p basis =
+            let extendedBasis = Array.append basis [| p |]
+            let s = new SplitupFinder()
+            s.Testbed <- testBedFromBasis extendedBasis
+            let avg, std, next = avgErr s extendedBasis
+            avg, std, next, extendedBasis
+
+        let p1 = r.Next(0, suitesize)
+        let rec pump (avgs:float[]) (stddevs:float[]) (next:int) (basis:int[]) (nextHist:int[]) (n:int) =
+            match n with
+            | 0 -> avgs, stddevs, nextHist
+            | _ -> let avg, std, next, extBasis = exec next basis
+                   let newAvgs = Array.append avgs [| avg |]
+                   let newStddevs = Array.append stddevs [| std |]
+                   let newHist = Array.append nextHist [| next |]
+                   pump newAvgs newStddevs next extBasis newHist (n-1)
+        let res = pump (Array.empty<float>) (Array.empty<float>) p1 (Array.empty<int>) (Array.empty<int>) (suitesize - 4)
+        let a,b,c = res
+        let bestAvg = a.[a.Length - 1]
+        let bestRMS = b.[b.Length - 1]
+        numberOfSystemsForModel, bestAvg, bestRMS
+    //runCycle max
+
+    let start = 8
+    let results = Array.init ((max-start)/incr) (fun i -> i * incr + start) |> Array.map runCycle
+    let sb = System.Text.StringBuilder()
+    sb.AppendLine("model size;average;RMS;")
+    Array.iter (fun (a:int,b:float,c:float) -> sb.AppendFormat("{0};{1};{2};", a, b, c) |> ignore; sb.AppendLine() |> ignore ) results
+    let filename = @"C:\data\model_size_INT.csv"
+    System.IO.File.WriteAllText(filename, sb.ToString())
+    printfn "cycle saved to %s" filename
+    results
+
+
+let res = findBestModelSize 1000 20
+
+execCycle 8
 
 
 
