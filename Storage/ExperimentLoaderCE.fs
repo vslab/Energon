@@ -4,7 +4,6 @@ open System
 //open Microsoft.FSharp.Data.TypeProviders
 open System.Data.Linq.SqlClient
 open System.Linq
-open Microsoft.FSharp.Linq
 open System.Data.Linq
 open System.Data.SqlServerCe;
 open Energon.Measuring
@@ -63,9 +62,9 @@ let ExperimentLoaderCE(expID:int, file:string) =
             let newSens = new DatabaseSensor(cl.SensorName, cl.Id)
             sensors.Add(newSens)
 
-    runseqseq |> Seq.iter (fun (runseq:seq<ExperimentRuns>) -> 
+    runseqseq |> Seq.iter (fun (runseq:IQueryable<ExperimentRuns>) -> 
             let sensseqseq = runseq2senseqseq runseq
-            sensseqseq |> Seq.iter ( fun (sensseq:seq<Sensors>) -> 
+            sensseqseq |> Seq.iter ( fun (sensseq:IQueryable<Sensors>) -> 
                 Seq.iter handleSensors sensseq
             )
         )  

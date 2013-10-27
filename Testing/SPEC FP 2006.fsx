@@ -64,7 +64,7 @@ let fetchFile (rel_addr:string) =
     let addr = "http://www.spec.org/cpu2006/results/" + rel_addr
     printfn "fetching %s" addr
     System.Threading.Thread.Sleep(1000)
-    let wc = System.Net.WebClient()
+    let wc = new System.Net.WebClient()
     let content = wc.DownloadString(addr)
     if content.StartsWith("valid,0") then
         ([], "", addr)

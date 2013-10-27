@@ -33,9 +33,6 @@ let showSensorRealtime (s:PushSensor) =
 let showSensorListRealtime (sensors:seq<PushSensor>) =
     FSharpChart.Rows [ for s in sensors -> FSharpChart.FastLine(Observable.map (fun (r:Reading) -> (r.Timestamp, r.Value)) s.ObservableReadings, Name=s.Name) :> ChartTypes.GenericChart] |> FSharpChart.WithMargin(0.0f, 8.0f, 2.0f, 0.0f) |> FSharpChart.WithLegend ( InsideArea = false, Alignment = StringAlignment.Center, Docking = Docking.Top) |> FSharpChart.Create
 
-let showExperimentCase (expCase:ExperimentCase) =
-    FSharpChart.Rows [ for s in expCase.Sensors -> FSharpChart.Combine [ for i in 0..(expCase.IterCount-1) -> let l=expCase.Results.[s].[i] in Array.map (fun (r:Reading) -> (r.Timestamp.Subtract(fst(expCase.StartStopTimes.[i])).Seconds, r.Value )) l |> FSharpChart.FastLine :> ChartTypes.GenericChart ] :> ChartTypes.GenericChart ] |> FSharpChart.Create
-
 let showExperimentCaseMeansAndStdDev (expCase:ExperimentCase) =
     let seq1 = Seq.map (fun s -> (s, expCase.MeansAndStdDev.[s])) expCase.Sensors
     let seq2 = Seq.map (fun ((s:GenericSensor), (m,d)) -> (s.Name, (m, d, d))) seq1
