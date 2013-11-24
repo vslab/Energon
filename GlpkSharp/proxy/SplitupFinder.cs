@@ -38,7 +38,7 @@ namespace GlpkProxy
         /// Finds the splitup vector of the Target program using the programs of the Testbed as generators. Solves the Ax=Y equation using the simplex. Also finds the error vector E, defined as E=|Ax-Y|.
         /// </summary>
         /// <returns>true if the simplex found a solution</returns>
-        public bool FindSplitup()
+        public bool FindSplitup(bool cone)
         {
             // do we have at least 1 program in the testbed?
             if (Testbed.Length < 1)
@@ -138,7 +138,8 @@ namespace GlpkProxy
                 rowBounds.Add(b);
 	        }
             List<Proxy.bound> colBounds = new List<Proxy.bound>();
-            for (int i = 0; i < columns; i++)
+            int firstColumnBound = cone ? 0 : programs;
+            for (int i = firstColumnBound; i < columns; i++)
             {
                 Proxy.bound b = new Proxy.bound();
                 b.BoundType = BOUNDSTYPE.Lower;

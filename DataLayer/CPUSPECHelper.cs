@@ -66,11 +66,23 @@ namespace DataLayer
                 return -1;
         }
 
-        public void SaveNewExperiment(string dbFile, string CpuName, string CpuMHz, string FPU, string Memory, string OS, string Compiler, string ProgramName, double CompletionTime)
+        private long getExp(SPECCPUDB_Mine db, string url, long EnvID, long ProgID, decimal BaseRefTime, decimal BaseRunTime)
+        {
+            var exps = db.Experiments.Where(e => e.url == url && e.EnvID == EnvID && e.ProgID == ProgID && e.BaseRefTime == BaseRefTime && e.BaseRunTime == BaseRunTime);
+            int expsCount = exps.Count();
+            if (expsCount > 0)
+            {
+                var e = exps.ElementAt(0);
+                return e.ID;
+            }
+            else
+                return -1;
+        }
+
+        public void SaveNewExperiment(string dbFile, string url, string CpuName, string CpuMHz, string FPU, string Memory, string OS, string Compiler, string ProgramName, decimal BaseRefTime, decimal BaseRunTime)
         {
             using (var db = new SPECCPUDB_Mine(new LinqToDB.DataProvider.SQLite.SQLiteDataProvider(), String.Format(@"Data Source={0}", dbFile)))
             {
-
                 long EnvID = getEnv(db, CpuName, CpuMHz, FPU, Memory, OS, Compiler);
                 if (EnvID < 0)
                 {
@@ -92,12 +104,48 @@ namespace DataLayer
                     db.Insert(p);
                     ProgID = getProg(db, ProgramName);
                 }
-                var exp = new DataModel.Experiment();
-                exp.EnvID = EnvID;
-                exp.ProgID = ProgID;
-                exp.CompletionTime = new decimal(CompletionTime);
-                db.Insert(exp);
+                var expID = getExp(db, url, EnvID, ProgID, BaseRefTime, BaseRunTime);
+                if (expID < 0)
+                {
+                    var exp = new DataModel.Experiment();
+                    exp.url = url;
+                    exp.EnvID = EnvID;
+                    exp.ProgID = ProgID;
+                    exp.BaseRefTime = BaseRefTime;
+                    exp.BaseRunTime = BaseRunTime;
+                    db.Insert(exp);
+                }
             }
+        }
+
+        public SPECCPUDB_Mine getDB(string dbFile)
+        {
+            return new SPECCPUDB_Mine(new LinqToDB.DataProvider.SQLite.SQLiteDataProvider(), String.Format(@"Data Source={0}", dbFile));
+        }
+
+        public Experiment[] getExperimentsOfEnvironment(SPECCPUDB_Mine db, long ID)
+        {
+            return db.Experiments.Where(e => e.EnvID == ID).OrderBy(e => e.ProgID).ToArray();
+        }
+
+        public Program getProgram(SPECCPUDB_Mine db, long ID)
+        {
+            return db.Programs.First(p => p.ID == ID);
+        }
+
+        public Program[] getPrograms(SPECCPUDB_Mine db)
+        {
+            return db.Programs.Where(p => true).ToArray();
+        }
+
+        public DataModel.Environment[] getEnvironments(SPECCPUDB_Mine db)
+        {
+            return db.Environments.Where(p => true).ToArray();
+        }
+
+        public Experiment[] getExperimentOfEnvironment(SPECCPUDB_Mine db, long EnvID)
+        {
+            var exps = 
         }
 
     }

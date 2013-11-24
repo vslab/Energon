@@ -47,10 +47,12 @@ namespace DataModel
 	[Table("Experiment")]
 	public partial class Experiment
 	{
-		[Column,     Nullable] public decimal? CompletionTime { get; set; } // numeric
-		[Column,     Nullable] public decimal? EnvID          { get; set; } // numeric
-		[Column,     Nullable] public decimal? ProgID         { get; set; } // numeric
-		[PrimaryKey, Identity] public long     ID             { get; set; } // integer
+		[Column,     Nullable] public decimal? BaseRunTime { get; set; } // numeric
+		[Column,     Nullable] public string   url         { get; set; } // text(2147483647)
+		[Column,     Nullable] public decimal? BaseRefTime { get; set; } // numeric
+		[Column,     Nullable] public decimal? EnvID       { get; set; } // numeric
+		[Column,     Nullable] public decimal? ProgID      { get; set; } // numeric
+		[PrimaryKey, Identity] public long     ID          { get; set; } // integer
 	}
 
 	[Table("Program")]
